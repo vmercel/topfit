@@ -1,5 +1,7 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabase";
 import { currentUser } from "@/lib/supabase-server";
 import PackView from "@/components/PackView";
@@ -48,15 +50,20 @@ export default function PrepPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 pb-20 sm:px-6">
-      <header className="flex items-center justify-end pb-6 pt-8">
-        <a href="/dashboard" className="text-sm font-medium text-emerald-700 underline">
+    <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 sm:px-6">
+      <header className="flex items-center justify-start pb-6 pt-8">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-white px-4 py-2 text-sm font-semibold text-ink-soft shadow-pop transition hover:border-forest-300 hover:text-forest-800"
+        >
+          <ArrowLeft className="h-4 w-4" />
           Back to your dashboard
-        </a>
+        </Link>
       </header>
       <Suspense
         fallback={
-          <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
+          <p className="inline-flex items-center gap-2 rounded-2xl border border-line bg-white px-5 py-4 text-sm text-slate-500 shadow-card">
+            <Loader2 className="h-4 w-4 animate-spin" />
             Loading your prep pack...
           </p>
         }

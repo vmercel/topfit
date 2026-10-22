@@ -1,26 +1,59 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* Brand: deep forest green on warm paper with ink text */
+  --color-paper: #f6f4ed;
+  --color-cream: #fcfbf7;
+  --color-ink: #182420;
+  --color-ink-soft: #43524b;
+  --color-line: #e3ded0;
+  --color-line-strong: #d3ccb9;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-forest-50: #eff6f1;
+  --color-forest-100: #dcebe1;
+  --color-forest-200: #b9d6c5;
+  --color-forest-300: #8bb9a1;
+  --color-forest-400: #5c967b;
+  --color-forest-500: #3d7a5f;
+  --color-forest-600: #2a6349;
+  --color-forest-700: #1f4f3a;
+  --color-forest-800: #17402f;
+  --color-forest-900: #123c35;
+  --color-forest-950: #0a2924;
+
+  --color-copper-50: #faf1e9;
+  --color-copper-100: #f3dfcd;
+  --color-copper-500: #c47a52;
+  --color-copper-600: #ab6540;
+  --color-copper-700: #8f5434;
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --shadow-card:
+    0 1px 2px rgb(18 60 53 / 0.05),
+    0 10px 30px -14px rgb(18 60 53 / 0.16);
+  --shadow-lift:
+    0 2px 4px rgb(18 60 53 / 0.06),
+    0 20px 44px -16px rgb(18 60 53 / 0.24);
+  --shadow-pop:
+    0 1px 2px rgb(18 60 53 / 0.08),
+    0 6px 16px -8px rgb(18 60 53 / 0.22);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-forest-200);
+  color: var(--color-forest-950);
 }

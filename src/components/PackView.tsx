@@ -1,7 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { PrepResult } from "@/lib/types";
+import {
+  AlertTriangle,
+  Check,
+  ChevronDown,
+  Clock,
+  Copy,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  FileText,
+  ListChecks,
+  MessagesSquare,
+  Quote,
+  ShieldAlert,
+  Target,
+} from "lucide-react";
+import { STAGES, INTERVIEW_TYPES, type PrepResult } from "@/lib/types";
 
 function secondsLabel(s: number) {
   return `~${s}s spoken`;
@@ -49,13 +65,14 @@ function Timer() {
   const mm = String(Math.floor(secs / 60)).padStart(1, "0");
   const ss = String(secs % 60).padStart(2, "0");
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="font-mono text-base tabular-nums text-slate-800">
+    <div className="flex items-center gap-2.5 rounded-full border border-line bg-white py-1.5 pl-3.5 pr-2 shadow-pop">
+      <span className="flex items-center gap-1.5 font-mono text-sm tabular-nums text-ink">
+        <Clock className="h-4 w-4 text-forest-600" />
         {mm}:{ss}
       </span>
       <button
         onClick={() => setRunning((r) => !r)}
-        className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+        className="rounded-full bg-forest-900 px-3 py-1 text-xs font-semibold text-white transition hover:bg-forest-800"
       >
         {running ? "Pause" : secs > 0 ? "Resume" : "Time yourself"}
       </button>
@@ -65,12 +82,54 @@ function Timer() {
             setSecs(0);
             setRunning(false);
           }}
-          className="text-xs text-slate-500 underline"
+          className="pr-1.5 text-xs font-medium text-slate-500 underline transition hover:text-ink"
         >
           Reset
         </button>
       )}
     </div>
+  );
+}
+
+function CoverageRing({ pct, covered, total }: { pct: number; covered: number; total: number }) {
+  const size = 128;
+  const stroke = 10;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-forest-100" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c - (pct / 100) * c}
+          className="stroke-forest-600 transition-all duration-700"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-[26px] font-bold leading-none tracking-tight text-forest-950">
+          {covered}/{total}
+        </span>
+        <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-forest-700">
+          {pct}% covered
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SectionLabel({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+      <span className="text-forest-600">{icon}</span>
+      {children}
+    </h3>
   );
 }
 
@@ -92,6 +151,10 @@ export default function PackView({ result }: { result: PrepResult }) {
     return m;
   }, [analysis]);
 
+  const stageLabel = STAGES.find((s) => s.id === result.stage)?.label || result.stage;
+  const typeLabel =
+    INTERVIEW_TYPES.find((t) => t.id === result.interviewType)?.label || result.interviewType;
+
   async function copyPack() {
     try {
       await navigator.clipboard.writeText(toMarkdown(result));
@@ -102,110 +165,156 @@ export default function PackView({ result }: { result: PrepResult }) {
     }
   }
 
+  const btnBase =
+    "inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition";
+  const btnGhost = `${btnBase} border border-line-strong bg-white text-ink-soft hover:border-forest-300 hover:text-forest-800`;
+
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              {analysis.domain} · {analysis.seniority}
-            </p>
-            <h2 className="mt-1 text-2xl font-bold text-slate-900">
-              {analysis.roleTitle} at {analysis.company}
-            </h2>
-            <p className="mt-2 text-[15px] leading-relaxed text-slate-700">{pack.headline}</p>
-            <p className="mt-2 text-sm text-slate-500">
-              Prepared for {analysis.candidateName} · {analysis.pitchLine}
-            </p>
-          </div>
-          <div className="min-w-44 rounded-xl bg-emerald-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
-              Requirement coverage
-            </p>
-            <p className="mt-1 text-3xl font-bold text-emerald-900">
-              {pack.coveredCount}/{pack.totalMustHaves}
-            </p>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-emerald-100">
-              <div className="h-full bg-emerald-600" style={{ width: `${coveragePct}%` }} />
-            </div>
-            <p className="mt-2 text-xs leading-relaxed text-emerald-900">{pack.coverageNote}</p>
-          </div>
-        </div>
+      <section className="overflow-hidden rounded-[28px] border border-line bg-white shadow-card">
+        <div className="h-1.5 bg-gradient-to-r from-forest-800 via-forest-600 to-copper-500" />
+        <div className="p-6 sm:p-8">
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="min-w-0 max-w-2xl flex-1">
+              <p className="inline-flex items-center gap-2 rounded-full bg-forest-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-forest-800 ring-1 ring-forest-100">
+                {analysis.domain} · {analysis.seniority}
+              </p>
+              <h2 className="mt-3.5 text-3xl font-bold leading-tight tracking-tight text-ink">
+                {analysis.roleTitle} <span className="text-slate-400">at</span> {analysis.company}
+              </h2>
+              <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">{pack.headline}</p>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setPractice((p) => !p)}
-            className={`rounded-lg px-3.5 py-2 text-sm font-semibold ${
-              practice
-                ? "bg-slate-900 text-white"
-                : "bg-emerald-700 text-white hover:bg-emerald-800"
-            }`}
-          >
-            {practice ? "Exit practice mode" : "Practice mode: hide the answers"}
-          </button>
-          <button
-            onClick={copyPack}
-            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            {copied ? "Copied" : "Copy the whole pack"}
-          </button>
-          {result.id && (
-            <a
-              href={`/prep/${result.id}`}
-              className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-line pt-5 sm:grid-cols-4">
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    Candidate
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold text-ink">{analysis.candidateName}</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    Current role
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold text-ink">{analysis.currentTitle}</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    Experience
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold text-ink">{analysis.yearsExperience}</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    Interview
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold text-ink">
+                    {stageLabel} · {typeLabel}
+                  </dd>
+                </div>
+              </dl>
+              <p className="mt-4 text-sm leading-relaxed text-slate-500">{analysis.pitchLine}</p>
+            </div>
+
+            <div className="flex flex-col items-center gap-3 rounded-3xl bg-forest-50/80 px-6 py-5 ring-1 ring-forest-100">
+              <CoverageRing pct={coveragePct} covered={pack.coveredCount} total={pack.totalMustHaves} />
+              <p className="text-xs font-semibold uppercase tracking-wider text-forest-800">
+                Requirement coverage
+              </p>
+              <p className="max-w-48 text-center text-xs leading-relaxed text-forest-900">
+                {pack.coverageNote}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-7 flex flex-wrap items-center gap-2.5 border-t border-line pt-6">
+            <button
+              onClick={() => setPractice((p) => !p)}
+              className={
+                practice
+                  ? `${btnBase} bg-forest-950 text-white shadow-pop hover:bg-forest-900`
+                  : `${btnBase} bg-forest-700 text-white shadow-pop hover:bg-forest-800`
+              }
             >
-              Open the saved link
-            </a>
-          )}
-        </div>
+              {practice ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              {practice ? "Exit practice mode" : "Practice mode: hide the answers"}
+            </button>
+            <button onClick={copyPack} className={btnGhost}>
+              {copied ? <Check className="h-4 w-4 text-forest-600" /> : <Copy className="h-4 w-4" />}
+              {copied ? "Copied" : "Copy the whole pack"}
+            </button>
+            {result.id && (
+              <a href={`/prep/${result.id}`} className={btnGhost}>
+                <ExternalLink className="h-4 w-4" />
+                Open the saved link
+              </a>
+            )}
+          </div>
 
-        <div className="mt-5 grid gap-2 md:grid-cols-2">
-          {pack.strategy.map((s, i) => (
-            <div key={i} className="rounded-lg bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700">
-              {s}
+          <div className="mt-6">
+            <SectionLabel icon={<Target className="h-4 w-4" />}>Your strategy</SectionLabel>
+            <div className="mt-3.5 grid gap-2.5 md:grid-cols-2">
+              {pack.strategy.map((s, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 rounded-2xl bg-paper px-4 py-3 text-sm leading-relaxed text-ink-soft ring-1 ring-line/70"
+                >
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-forest-900 text-[11px] font-bold text-white">
+                    {i + 1}
+                  </span>
+                  <span className="pt-0.5">{s}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
       {analysis.requirements.length > 0 && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <section className="rounded-[28px] border border-line bg-white p-6 shadow-card sm:p-8">
+          <SectionLabel icon={<ListChecks className="h-4 w-4" />}>
             How your resume maps to this job
-          </h3>
-          <ul className="mt-3 divide-y divide-slate-100">
+          </SectionLabel>
+          <ul className="mt-4 divide-y divide-line/70">
             {analysis.requirements.map((r) => (
-              <li key={r.id} className="flex items-start gap-3 py-2.5">
+              <li key={r.id} className="flex items-start gap-3.5 py-3.5">
                 <span
-                  className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                  className={`mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                     r.match === "strong"
-                      ? "bg-emerald-100 text-emerald-800"
+                      ? "bg-forest-100 text-forest-800"
                       : r.match === "partial"
                         ? "bg-amber-100 text-amber-800"
                         : "bg-rose-100 text-rose-800"
                   }`}
                 >
+                  {r.match === "strong" ? (
+                    <Check className="h-3 w-3" />
+                  ) : r.match === "partial" ? (
+                    <AlertTriangle className="h-3 w-3" />
+                  ) : (
+                    <EyeOff className="h-3 w-3" />
+                  )}
                   {r.match === "strong" ? "Strong" : r.match === "partial" ? "Partial" : "Gap"}
                 </span>
-                <div>
-                  <p className="text-sm font-medium text-slate-800">{r.text}</p>
-                  <p className="text-xs text-slate-500">{r.note}</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-ink">{r.text}</p>
+                  <p className="mt-0.5 text-[13px] leading-relaxed text-slate-500">{r.note}</p>
                 </div>
-                <span className="ml-auto shrink-0 text-[11px] font-medium uppercase text-slate-400">
+                <span className="ml-auto shrink-0 rounded-full bg-paper px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 ring-1 ring-line">
                   {r.kind === "must" ? "Must have" : "Nice to have"}
                 </span>
               </li>
             ))}
           </ul>
           {analysis.risks.length > 0 && (
-            <div className="mt-4 rounded-lg bg-amber-50 p-3.5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+            <div className="mt-5 rounded-2xl border border-amber-200/70 bg-amber-50 p-4.5 sm:p-5">
+              <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-amber-800">
+                <ShieldAlert className="h-4 w-4" />
                 Objections to pre-empt
               </p>
-              <ul className="mt-1.5 space-y-1.5">
+              <ul className="mt-2.5 space-y-2">
                 {analysis.risks.map((r, i) => (
-                  <li key={i} className="text-sm text-amber-900">
-                    <span className="font-medium">{r.text}.</span> {r.mitigation}
+                  <li key={i} className="text-sm leading-relaxed text-amber-900">
+                    <span className="font-semibold">{r.text}.</span> {r.mitigation}
                   </li>
                 ))}
               </ul>
@@ -219,114 +328,166 @@ export default function PackView({ result }: { result: PrepResult }) {
         const answerShown = !practice || revealed[key];
         const fuOpen = openFollowUps[key] || practice;
         return (
-          <section key={key} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-white">
-                Question {qi + 1}
-              </span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-                {q.category}
-              </span>
-              <span className="text-xs text-slate-500">{secondsLabel(q.seconds)} target</span>
-              <div className="ml-auto">
-                <Timer />
+          <section key={key} className="rounded-[28px] border border-line bg-white p-6 shadow-card sm:p-8">
+            <div className="flex gap-5">
+              <div className="hidden flex-col items-center sm:flex" aria-hidden="true">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-forest-900 text-[15px] font-bold text-white shadow-pop">
+                  {String(qi + 1).padStart(2, "0")}
+                </span>
+                <span className="mt-3 w-px flex-1 bg-line" />
               </div>
-            </div>
 
-            <h3 className="mt-3 text-xl font-semibold leading-snug text-slate-900">{q.question}</h3>
-            <p className="mt-1.5 text-sm text-slate-500">
-              <span className="font-medium text-slate-600">Why they ask:</span> {q.intent}
-            </p>
-
-            {q.provesRequirements.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {q.provesRequirements.map((rid) => (
-                  <span
-                    key={rid}
-                    className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-emerald-100"
-                  >
-                    Proves: {reqById.get(rid) || rid}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-forest-900 px-2.5 py-0.5 text-xs font-semibold text-white sm:hidden">
+                    Question {qi + 1}
                   </span>
-                ))}
-              </div>
-            )}
+                  <span className="rounded-full bg-paper px-2.5 py-0.5 text-xs font-semibold text-ink-soft ring-1 ring-line">
+                    {q.category}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-paper px-2.5 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-line">
+                    <Clock className="h-3.5 w-3.5 text-forest-600" />
+                    {secondsLabel(q.seconds)} target
+                  </span>
+                  <div className="ml-auto">
+                    <Timer />
+                  </div>
+                </div>
 
-            {answerShown ? (
-              <div className="mt-4">
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="whitespace-pre-line text-[15px] leading-relaxed text-slate-800">
-                    {q.answer}
-                  </p>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {q.structure.map((s, i) => (
-                    <span key={i} className="rounded-md bg-white px-2 py-1 text-[11px] text-slate-500 ring-1 ring-slate-200">
-                      {s}
-                    </span>
-                  ))}
-                </div>
-                {q.evidenceUsed.length > 0 && (
-                  <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                    <span className="font-medium text-slate-600">Built from your resume:</span>{" "}
-                    {q.evidenceUsed.join(" · ")}
-                  </p>
-                )}
-                <p className="mt-3 rounded-lg bg-rose-50 px-3.5 py-2.5 text-sm text-rose-900">
-                  <span className="font-semibold">Watch out:</span> {q.trap}
+                <h3 className="mt-4 text-[22px] font-bold leading-snug tracking-tight text-ink">
+                  {q.question}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                  <span className="font-semibold text-ink-soft">Why they ask:</span> {q.intent}
                 </p>
-              </div>
-            ) : (
-              <button
-                onClick={() => setRevealed((r) => ({ ...r, [key]: true }))}
-                className="mt-4 w-full rounded-xl border-2 border-dashed border-slate-300 py-8 text-sm font-medium text-slate-500 hover:border-emerald-500 hover:text-emerald-700"
-              >
-                Say your answer out loud, timed. Then tap to compare with the engineered answer.
-              </button>
-            )}
 
-            <div className="mt-5 border-t border-slate-100 pt-4">
-              <button
-                onClick={() => setOpenFollowUps((o) => ({ ...o, [key]: !fuOpen }))}
-                className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
-              >
-                {fuOpen ? "Hide" : "Show"} the 3 follow-ups they will ask next
-              </button>
-              {fuOpen && (
-                <div className="mt-3 space-y-3">
-                  {q.followUps.map((f, fi) => (
-                    <div key={fi} className="rounded-xl border border-slate-200 p-4">
-                      <p className="text-[15px] font-medium text-slate-900">
-                        {fi + 1}. {f.question}
-                      </p>
-                      <p className="mt-0.5 text-xs text-slate-500">
-                        Likely because: {f.whyLikely} · {secondsLabel(f.seconds)}
-                      </p>
-                      <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">
-                        {f.answer}
+                {q.provesRequirements.length > 0 && (
+                  <div className="mt-3.5 flex flex-wrap gap-1.5">
+                    {q.provesRequirements.map((rid) => (
+                      <span
+                        key={rid}
+                        className="inline-flex items-center gap-1 rounded-full bg-forest-50 px-2.5 py-1 text-[11px] font-semibold text-forest-800 ring-1 ring-forest-100"
+                      >
+                        <Check className="h-3 w-3" />
+                        Proves: {reqById.get(rid) || rid}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {answerShown ? (
+                  <div className="mt-5">
+                    <div className="rounded-2xl bg-paper p-5 ring-1 ring-line/70">
+                      <p className="whitespace-pre-line text-[15px] leading-[1.75] text-ink">
+                        {q.answer}
                       </p>
                     </div>
-                  ))}
+                    <div className="mt-3.5 flex flex-wrap gap-1.5">
+                      {q.structure.map((s, i) => (
+                        <span key={i} className="rounded-lg bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500 ring-1 ring-line">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                    {q.evidenceUsed.length > 0 && (
+                      <p className="mt-3.5 flex items-start gap-1.5 text-xs leading-relaxed text-slate-500">
+                        <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-forest-600" />
+                        <span>
+                          <span className="font-semibold text-ink-soft">Built from your resume:</span>{" "}
+                          {q.evidenceUsed.join(" · ")}
+                        </span>
+                      </p>
+                    )}
+                    <p className="mt-4 flex items-start gap-2.5 rounded-2xl border border-rose-200/70 bg-rose-50 px-4 py-3 text-sm leading-relaxed text-rose-900">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>
+                        <span className="font-bold">Watch out:</span> {q.trap}
+                      </span>
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setRevealed((r) => ({ ...r, [key]: true }))}
+                    className="mt-5 flex w-full flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-line-strong py-9 text-sm font-medium text-slate-500 transition hover:border-forest-400 hover:bg-forest-50/50 hover:text-forest-800"
+                  >
+                    <EyeOff className="h-5 w-5" />
+                    Say your answer out loud, timed. Then tap to compare with the engineered answer.
+                  </button>
+                )}
+
+                <div className="mt-6 border-t border-line pt-5">
+                  <button
+                    onClick={() => setOpenFollowUps((o) => ({ ...o, [key]: !fuOpen }))}
+                    aria-expanded={fuOpen}
+                    className="flex w-full items-center gap-2 text-left text-sm font-bold text-forest-800 transition hover:text-forest-950"
+                  >
+                    <MessagesSquare className="h-4.5 w-4.5 text-forest-600" />
+                    {fuOpen ? "Hide" : "Show"} the 3 follow-ups they will ask next
+                    <ChevronDown
+                      className={`ml-auto h-4.5 w-4.5 transition-transform duration-200 ${fuOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {fuOpen && (
+                    <div className="relative ml-2 mt-4 space-y-3 border-l-2 border-forest-100 pl-5">
+                      {q.followUps.map((f, fi) => (
+                        <div key={fi} className="relative rounded-2xl border border-line bg-cream p-4.5 sm:p-5">
+                          <span
+                            className="absolute -left-[27px] top-6 h-2.5 w-2.5 rounded-full bg-forest-400 ring-4 ring-white"
+                            aria-hidden="true"
+                          />
+                          <div className="flex items-start gap-3">
+                            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-forest-100 text-[11px] font-bold text-forest-800">
+                              {fi + 1}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-[15px] font-semibold leading-snug text-ink">{f.question}</p>
+                              <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
+                                <span>Likely because: {f.whyLikely}</span>
+                                <span aria-hidden="true">·</span>
+                                <span className="inline-flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {secondsLabel(f.seconds)}
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+                          <p className="mt-3 whitespace-pre-line text-sm leading-[1.7] text-ink-soft">
+                            {f.answer}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </section>
         );
       })}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+      <section className="rounded-[28px] border border-line bg-white p-6 shadow-card sm:p-8">
+        <SectionLabel icon={<MessagesSquare className="h-4 w-4" />}>
           Questions you ask them
-        </h3>
-        <ul className="mt-3 space-y-2">
+        </SectionLabel>
+        <ul className="mt-4 space-y-2.5">
           {pack.questionsToAsk.map((q, i) => (
-            <li key={i} className="rounded-lg bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700">
-              {q}
+            <li
+              key={i}
+              className="flex items-start gap-3 rounded-2xl bg-paper px-4 py-3 text-sm leading-relaxed text-ink-soft ring-1 ring-line/70"
+            >
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-white text-[11px] font-bold text-forest-800 ring-1 ring-line">
+                {i + 1}
+              </span>
+              <span className="pt-0.5">{q}</span>
             </li>
           ))}
         </ul>
-        <p className="mt-4 text-[15px] text-slate-800">
-          <span className="font-semibold">Closing line:</span> {pack.closingLine}
-        </p>
+        <div className="mt-5 flex items-start gap-3.5 rounded-2xl border border-forest-100 bg-forest-50 px-5 py-4">
+          <Quote className="mt-0.5 h-5 w-5 shrink-0 text-forest-600" />
+          <p className="text-[15px] leading-relaxed text-ink">
+            <span className="font-bold text-forest-900">Closing line:</span> {pack.closingLine}
+          </p>
+        </div>
       </section>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 
 export default function DeletePackButton({ id }: { id: string }) {
   const router = useRouter();
@@ -19,8 +20,9 @@ export default function DeletePackButton({ id }: { id: string }) {
     <button
       onClick={remove}
       disabled={busy}
-      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-60"
+      className="inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-white px-3.5 py-2 text-sm font-medium text-ink-soft transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-60"
     >
+      <Trash2 className="h-4 w-4" />
       {busy ? "Deleting..." : "Delete"}
     </button>
   );
