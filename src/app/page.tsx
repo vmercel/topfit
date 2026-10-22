@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { STAGES, INTERVIEW_TYPES, type PrepResult } from "@/lib/types";
 import PackView from "@/components/PackView";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 const PROGRESS_STEPS = [
   "Reading your resume",
@@ -26,8 +28,16 @@ export default function Home() {
   const [stepIdx, setStepIdx] = useState(0);
   const [error, setError] = useState("");
   const [result, setResult] = useState<PrepResult | null>(null);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    supabaseBrowser()
+      .auth.getUser()
+      .then(({ data }) => setSignedIn(!!data.user))
+      .catch(() => setSignedIn(false));
+  }, []);
 
   async function generate() {
     setError("");
@@ -80,6 +90,31 @@ export default function Home() {
           engineers brief answers from your own experience, and prepares you for the follow-ups.
         </p>
       </header>
+
+      {signedIn === false && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5">
+          <p className="text-sm text-emerald-900">
+            You are not signed in. Packs you build now open by link only. Create a free account and
+            every pack is saved to your dashboard, ready when you come back.
+          </p>
+          <Link
+            href="/signup"
+            className="rounded-lg bg-emerald-700 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+          >
+            Create account
+          </Link>
+        </div>
+      )}
+      {signedIn === true && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3.5">
+          <p className="text-sm text-slate-700">
+            Signed in. Every pack you build is saved to your dashboard automatically.
+          </p>
+          <Link href="/dashboard" className="text-sm font-medium text-emerald-700 underline">
+            View your history
+          </Link>
+        </div>
+      )}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="grid gap-6 md:grid-cols-2">

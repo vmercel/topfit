@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { extractResumeText, cleanJd } from "@/lib/parse";
 import { analyzeResumeAndJd, generatePack } from "@/lib/pipeline";
 import { supabaseAdmin } from "@/lib/supabase";
+import { currentUser } from "@/lib/supabase-server";
 
 export const maxDuration = 300;
 
@@ -42,10 +43,12 @@ export async function POST(req: NextRequest) {
 
     let sessionId: string | null = null;
     const db = supabaseAdmin();
+    const user = await currentUser().catch(() => null);
     if (db) {
       const { data: session, error: sErr } = await db
         .from("prep_sessions")
         .insert({
+          user_id: user?.id ?? null,
           candidate_name: a.analysis.candidateName,
           role_title: a.analysis.roleTitle,
           company: a.analysis.company,

@@ -1,21 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { currentUser } from "@/lib/supabase-server";
+
+async function loadOwnedSession(id: string) {
+  const db = supabaseAdmin();
+  if (!db) return { db: null, session: null, status: 500 as const };
+  const { data: session } = await db
+    .from("prep_sessions")
+    .select("id, stage, interview_type, user_id")
+    .eq("id", id)
+    .single();
+  if (!session) return { db, session: null, status: 404 as const };
+  if (session.user_id) {
+    const user = await currentUser().catch(() => null);
+    if (!user || user.id !== session.user_id) {
+      return { db, session: null, status: 404 as const };
+    }
+  }
+  return { db, session, status: 200 as const };
+}
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const db = supabaseAdmin();
+  const { db, session, status } = await loadOwnedSession(id);
   if (!db) return NextResponse.json({ error: "Database not configured." }, { status: 500 });
-
-  const { data: session, error } = await db
-    .from("prep_sessions")
-    .select("id, stage, interview_type")
-    .eq("id", id)
-    .single();
-  if (error || !session) {
-    return NextResponse.json({ error: "Prep pack not found." }, { status: 404 });
+  if (!session) {
+    return NextResponse.json({ error: "Prep pack not found." }, { status });
   }
 
   const { data: packRow } = await db
@@ -36,4 +49,19 @@ export async function GET(
     analysis: packRow.analysis,
     pack: packRow.pack,
   });
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const { db, session, status } = await loadOwnedSession(id);
+  if (!db) return NextResponse.json({ error: "Database not configured." }, { status: 500 });
+  if (!session) {
+    return NextResponse.json({ error: "Prep pack not found." }, { status });
+  }
+  const { error } = await db.from("prep_sessions").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
 }

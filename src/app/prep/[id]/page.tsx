@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase";
+import { currentUser } from "@/lib/supabase-server";
 import PackView from "@/components/PackView";
 import type { PrepResult } from "@/lib/types";
 
@@ -11,10 +12,15 @@ async function PackLoader({ params }: { params: Promise<{ id: string }> }) {
 
   const { data: session } = await db
     .from("prep_sessions")
-    .select("id, stage, interview_type, role_title, company")
+    .select("id, stage, interview_type, role_title, company, user_id")
     .eq("id", id)
     .single();
   if (!session) notFound();
+
+  if (session.user_id) {
+    const user = await currentUser().catch(() => null);
+    if (!user || user.id !== session.user_id) notFound();
+  }
 
   const { data: packRow } = await db
     .from("prep_packs")
@@ -43,10 +49,9 @@ export default function PrepPage({
 }) {
   return (
     <main className="mx-auto w-full max-w-5xl px-4 pb-20 sm:px-6">
-      <header className="flex items-center justify-between pb-6 pt-8">
-        <p className="text-sm font-bold uppercase tracking-[0.2em] text-emerald-700">TopFit</p>
-        <a href="/" className="text-sm font-medium text-emerald-700 underline">
-          Build a new prep pack
+      <header className="flex items-center justify-end pb-6 pt-8">
+        <a href="/dashboard" className="text-sm font-medium text-emerald-700 underline">
+          Back to your dashboard
         </a>
       </header>
       <Suspense
