@@ -91,20 +91,6 @@ export default function Home() {
         </p>
       </header>
 
-      {signedIn === false && (
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5">
-          <p className="text-sm text-emerald-900">
-            You are not signed in. Packs you build now open by link only. Create a free account and
-            every pack is saved to your dashboard, ready when you come back.
-          </p>
-          <Link
-            href="/signup"
-            className="rounded-lg bg-emerald-700 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
-          >
-            Create account
-          </Link>
-        </div>
-      )}
       {signedIn === true && (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3.5">
           <p className="text-sm text-slate-700">
@@ -116,6 +102,33 @@ export default function Home() {
         </div>
       )}
 
+      {signedIn === false ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+          <h2 className="text-2xl font-bold text-slate-900">Sign in to build your prep pack</h2>
+          <p className="mx-auto mt-2 max-w-md text-[15px] leading-relaxed text-slate-600">
+            TopFit accounts are free. Your resume, your job descriptions and every prep pack stay
+            in your own dashboard, ready whenever you come back.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/signup"
+              className="rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-800"
+            >
+              Create a free account
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Sign in
+            </Link>
+          </div>
+        </section>
+      ) : signedIn === null ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+          <p className="text-sm text-slate-500">Checking your session...</p>
+        </section>
+      ) : (
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="grid gap-6 md:grid-cols-2">
           <div>
@@ -248,6 +261,7 @@ export default function Home() {
           </div>
         )}
       </section>
+      )}
 
       <div ref={resultRef} className="mt-8 scroll-mt-6">
         {result && <PackView result={result} />}

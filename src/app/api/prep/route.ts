@@ -8,6 +8,14 @@ export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await currentUser().catch(() => null);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Sign in to build a prep pack." },
+        { status: 401 }
+      );
+    }
+
     const form = await req.formData();
     const jdRaw = String(form.get("jdText") || "");
     const stage = String(form.get("stage") || "hiring_manager");
@@ -43,7 +51,6 @@ export async function POST(req: NextRequest) {
 
     let sessionId: string | null = null;
     const db = supabaseAdmin();
-    const user = await currentUser().catch(() => null);
     if (db) {
       const { data: session, error: sErr } = await db
         .from("prep_sessions")
