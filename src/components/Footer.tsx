@@ -21,16 +21,24 @@ export default function Footer() {
               </p>
               <ul className="mt-3 space-y-2.5">
                 <li>
-                  <Link href="/" className="font-medium text-ink-soft transition hover:text-forest-700">
-                    New prep
+                  <Link href="/features" className="font-medium text-ink-soft transition hover:text-forest-700">
+                    Features
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="/dashboard"
+                    href="/pricing"
                     className="font-medium text-ink-soft transition hover:text-forest-700"
                   >
-                    Dashboard
+                    Pricing
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/contact"
+                    className="font-medium text-ink-soft transition hover:text-forest-700"
+                  >
+                    Contact
                   </Link>
                 </li>
               </ul>
@@ -51,6 +59,14 @@ export default function Footer() {
                     className="font-medium text-ink-soft transition hover:text-forest-700"
                   >
                     Create account
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/app/dashboard"
+                    className="font-medium text-ink-soft transition hover:text-forest-700"
+                  >
+                    My prep packs
                   </Link>
                 </li>
               </ul>

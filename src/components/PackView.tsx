@@ -243,7 +243,7 @@ export default function PackView({ result }: { result: PrepResult }) {
               {copied ? "Copied" : "Copy the whole pack"}
             </button>
             {result.id && (
-              <a href={`/prep/${result.id}`} className={btnGhost}>
+              <a href={`/app/prep/${result.id}`} className={btnGhost}>
                 <ExternalLink className="h-4 w-4" />
                 Open the saved link
               </a>

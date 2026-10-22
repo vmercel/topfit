@@ -55,7 +55,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
       setError(authError.message);
       return;
     }
-    router.push("/");
+    router.push("/app");
     router.refresh();
   }
 
