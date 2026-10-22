@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
-import { AnalysisSchema, CorePackSchema, FollowUpsSchema } from "./schemas";
+import { AnalysisSchema, CorePackSchema, ExpandedAnswerSchema, FollowUpsSchema } from "./schemas";
 import { STAGE_BRIEFS, TYPE_BRIEFS, UNIVERSAL_RULES } from "./knowledge";
 import type { Analysis, CoreQuestion, FollowUp, PrepPack } from "./types";
 
@@ -15,6 +15,45 @@ function openai() {
 interface Usage {
   promptTokens: number;
   completionTokens: number;
+}
+
+function wordCount(text: string): number {
+  return text.trim().split(/\s+/).length;
+}
+
+// Constraint repair: if a core answer comes back under the 90-word floor, one
+// expansion pass rewrites it at full length using only the same evidence.
+async function expandAnswer(
+  analysis: Analysis,
+  question: CoreQuestion
+): Promise<{ answer: string } & Usage> {
+  const client = openai();
+  const completion = await client.chat.completions.parse({
+    model: MODEL,
+    temperature: 0.4,
+    messages: [
+      {
+        role: "system",
+        content: `You rewrite interview answers to full length. Take the draft answer below and expand it to 110-130 words by adding the missing moves: more specific evidence from the evidence bank, one method or trade-off detail, and a clear tie-back to the role. Use ONLY facts from the evidence bank. Never invent metrics, tools, employers or outcomes. Keep the first person, confident and plain. Return only the rewritten answer text in the "answer" field.`,
+      },
+      {
+        role: "user",
+        content: `ROLE: ${analysis.roleTitle} at ${analysis.company}
+QUESTION: ${question.question}
+DRAFT ANSWER (${wordCount(question.answer)} words): ${question.answer}
+
+EVIDENCE BANK:
+${analysis.evidenceBank.map((e) => `- ${e.text}`).join("\n")}`,
+      },
+    ],
+    response_format: zodResponseFormat(ExpandedAnswerSchema, "expanded_answer"),
+  });
+  const parsed = completion.choices[0]?.message.parsed;
+  return {
+    answer: parsed?.answer || question.answer,
+    promptTokens: completion.usage?.prompt_tokens ?? 0,
+    completionTokens: completion.usage?.completion_tokens ?? 0,
+  };
 }
 
 export async function analyzeResumeAndJd(
@@ -63,7 +102,7 @@ async function generateCorePack(
     messages: [
       {
         role: "system",
-        content: `You are an elite interview coach. Your candidates land in the top 3 percent because their answers are brief, evidenced and built for the exact room they are walking into. You are given a decoded analysis (evidence bank + requirement map) of a candidate against a job description. Select the 4 highest-probability questions for the stage below, mixing the stage's classic questions with questions derived from this specific JD, and engineer one answer per question.
+        content: `You are an elite interview coach. Your candidates land in the top 3 percent because their answers are brief, evidenced and built for the exact room they are walking into. You are given a decoded analysis (evidence bank + requirement map) of a candidate against a job description. Select the 4 highest-probability questions for the stage below and engineer one answer per question. At least 3 of the 4 must be derived from this JD's named skills, tools and responsibilities; at most 1 may be a generic classic (and only if the stage brief ranks it highest).
 
 ${stageBrief}
 ${typeBrief}
@@ -103,7 +142,7 @@ async function generateFollowUps(
     messages: [
       {
         role: "system",
-        content: `You are an elite interview coach predicting follow-up questions. A candidate will give the engineered answer below to a core interview question. Predict the 3 follow-ups a sharp interviewer at this stage will ask next: probes on metrics, on the candidate's personal contribution versus the team's, on trade-offs and alternatives rejected, on gaps or partial matches, and "what would you do differently". Write a tight answer for each: 45-80 words (about 20-35 seconds spoken), first person, grounded ONLY in the evidence bank below, honest bridges where evidence is partial, never an invented fact.
+        content: `You are an elite interview coach predicting follow-up questions. A candidate will give the engineered answer below to a core interview question. Predict the 3 follow-ups a sharp interviewer at this stage will ask next: probes on metrics, on the candidate's personal contribution versus the team's, on trade-offs and alternatives rejected, on gaps or partial matches, and "what would you do differently". Write a tight answer for each: MUST be 45-80 words (3-4 sentences of substance, about 20-35 seconds spoken), first person, grounded ONLY in the evidence bank below, honest bridges where evidence is partial, never an invented fact.
 
 Stage context: ${stageBrief.split("\n")[0]}`,
       },
@@ -134,7 +173,7 @@ ENGINEERED ANSWER: ${question.answer}`,
   };
 }
 
-// Orchestration: analysis -> core pack -> follow-ups for all 4 questions in parallel.
+// Orchestration: analysis -> core pack -> length repair -> follow-ups in parallel.
 export async function generatePack(
   analysis: Analysis,
   jdText: string,
@@ -142,13 +181,26 @@ export async function generatePack(
   interviewType: string
 ): Promise<{ pack: PrepPack } & Usage> {
   const core = await generateCorePack(analysis, jdText, stage, interviewType);
+
+  let repairPrompt = 0;
+  let repairCompletion = 0;
+  const repairedQuestions = await Promise.all(
+    core.core.questions.map(async (q) => {
+      if (wordCount(q.answer) >= 90) return q;
+      const r = await expandAnswer(analysis, q);
+      repairPrompt += r.promptTokens;
+      repairCompletion += r.completionTokens;
+      return wordCount(r.answer) > wordCount(q.answer) ? { ...q, answer: r.answer } : q;
+    })
+  );
+
   const followResults = await Promise.all(
-    core.core.questions.map((q) => generateFollowUps(analysis, q, stage))
+    repairedQuestions.map((q) => generateFollowUps(analysis, q, stage))
   );
 
   const pack: PrepPack = {
     ...core.core,
-    questions: core.core.questions.map((q, i) => ({
+    questions: repairedQuestions.map((q, i) => ({
       ...q,
       followUps: followResults[i].followUps.slice(0, 3),
     })),
@@ -157,8 +209,10 @@ export async function generatePack(
   return {
     pack,
     promptTokens:
-      core.promptTokens + followResults.reduce((s, r) => s + r.promptTokens, 0),
+      core.promptTokens + repairPrompt + followResults.reduce((s, r) => s + r.promptTokens, 0),
     completionTokens:
-      core.completionTokens + followResults.reduce((s, r) => s + r.completionTokens, 0),
+      core.completionTokens +
+      repairCompletion +
+      followResults.reduce((s, r) => s + r.completionTokens, 0),
   };
 }

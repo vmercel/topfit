@@ -67,6 +67,11 @@ export const FollowUpsSchema = z.object({
   followUps: z.array(FollowUpSchema),
 });
 
+// Single rewritten answer (constraint-repair pass).
+export const ExpandedAnswerSchema = z.object({
+  answer: z.string(),
+});
+
 // Full pack schema (core + follow-ups), used as the stored shape.
 export const PackSchema = CorePackSchema.extend({
   questions: z.array(

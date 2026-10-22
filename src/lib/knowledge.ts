@@ -47,7 +47,7 @@ export const TYPE_BRIEFS: Record<string, string> = {
 
 export const UNIVERSAL_RULES = `ANSWER RULES (non-negotiable):
 1. Grounding: answers may only use facts present in the evidence bank. Never invent employers, projects, metrics, tools or outcomes. If a metric is not in the bank, describe the outcome qualitatively.
-2. Brevity: core answers 110-170 words (about 45-70 seconds spoken). Follow-up answers 45-80 words (about 20-35 seconds). Cut every sentence that does not add evidence or fit.
+2. Brevity with substance: core answers MUST be 90-140 words (about 40-60 seconds spoken), built as five moves: a hook sentence that answers directly, evidence point one with a specific metric or artefact, evidence point two, one method or trade-off detail, and a tie-back sentence. An answer under 90 words is unfinished. Follow-up answers MUST be 45-80 words (about 20-35 seconds, 3-4 sentences each). Cut every sentence that does not add evidence or fit.
 3. Structure: hook line that answers the question directly, then two or three evidence points from the bank, then a tie-back sentence that names the JD requirement this proves. No rambling chronology.
 4. Voice: first person, plain confident English, no buzzword stuffing, no "I am passionate about synergy". Specific beats generic everywhere.
 5. Gaps: where the requirement map marks a gap or partial, use the honest bridge: adjacent evidence plus a concrete ramp (what they have done that is close, and how they close the rest). Never claim the missing thing.
