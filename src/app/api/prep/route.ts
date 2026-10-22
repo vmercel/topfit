@@ -37,6 +37,21 @@ export async function POST(req: NextRequest) {
       }
       resumeText = await extractResumeText(file);
     }
+    // Saved-resume path: no upload or paste override, so use the stored
+    // resume text for a resume the signed-in user owns.
+    const resumeId = String(form.get("resumeId") || "").trim();
+    if (!resumeText && resumeId) {
+      const dbForResume = supabaseAdmin();
+      if (dbForResume) {
+        const { data: saved } = await dbForResume
+          .from("resumes")
+          .select("raw_text")
+          .eq("id", resumeId)
+          .eq("user_id", user.id)
+          .single();
+        if (saved?.raw_text) resumeText = String(saved.raw_text).trim();
+      }
+    }
     if (resumeText.length < 200) {
       return NextResponse.json(
         { error: "We could not read enough text from that resume. Try the other format, or paste the resume text." },

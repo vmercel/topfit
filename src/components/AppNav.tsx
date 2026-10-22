@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { History, Mail, Plus, Sparkles, Tag } from "lucide-react";
+import { FileText, History, Mail, Plus, Sparkles, Tag } from "lucide-react";
 
 const APP_ITEMS = [
   { href: "/app", label: "New prep", icon: Plus },
   { href: "/app/dashboard", label: "My prep packs", icon: History },
+  { href: "/app/resumes", label: "My resumes", icon: FileText },
 ];
 
 const SITE_ITEMS = [
@@ -20,10 +21,12 @@ export function AppNavItems() {
   return (
     <>
       {APP_ITEMS.map((item) => {
-        const isPacks = item.href === "/app/dashboard";
-        const highlighted = isPacks
-          ? pathname.startsWith("/app/dashboard") || pathname.startsWith("/app/prep")
-          : pathname === item.href;
+        const highlighted =
+          item.href === "/app"
+            ? pathname === "/app"
+            : item.href === "/app/dashboard"
+              ? pathname.startsWith("/app/dashboard") || pathname.startsWith("/app/prep")
+              : pathname.startsWith(item.href);
         return (
           <Link
             key={item.href}

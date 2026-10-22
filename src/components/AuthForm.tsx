@@ -12,6 +12,8 @@ import {
   Lock,
   Mail,
   MessagesSquare,
+  Phone,
+  User,
 } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import Logo, { LogoMark } from "./Logo";
@@ -36,27 +38,66 @@ const PANEL_POINTS = [
 
 export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  async function routeAfterAuth() {
+    // Users without a saved primary resume go through onboarding first.
+    let hasResume = false;
+    try {
+      const res = await fetch("/api/resumes");
+      if (res.ok) {
+        const data = (await res.json()) as { resumes?: { isPrimary?: boolean }[] };
+        hasResume = (data.resumes ?? []).some((r) => r.isPrimary);
+      }
+    } catch {
+      hasResume = false;
+    }
+    router.push(hasResume ? "/app" : "/onboarding");
+    router.refresh();
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setBusy(true);
     const supabase = supabaseBrowser();
-    const { error: authError } =
-      mode === "signup"
-        ? await supabase.auth.signUp({ email, password })
-        : await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
-    if (authError) {
-      setError(authError.message);
-      return;
+    if (mode === "signup") {
+      const { error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName.trim(), phone: phone.trim() } },
+      });
+      if (authError) {
+        setBusy(false);
+        setError(authError.message);
+        return;
+      }
+      // Save the profile row before routing on. Non-fatal: onboarding and the
+      // app still work if this write fails.
+      try {
+        await fetch("/api/profile", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ fullName: fullName.trim(), phone: phone.trim() }),
+        });
+      } catch {
+        // Profile can be completed later; do not block account entry.
+      }
+    } else {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) {
+        setBusy(false);
+        setError(authError.message);
+        return;
+      }
     }
-    router.push("/app");
-    router.refresh();
+    setBusy(false);
+    await routeAfterAuth();
   }
 
   const inputClass =
@@ -108,6 +149,46 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
             </p>
 
             <form onSubmit={submit} className="mt-8 space-y-4">
+              {mode === "signup" && (
+                <>
+                  <div>
+                    <label className="text-sm font-semibold text-ink" htmlFor="auth-name">
+                      Full name
+                    </label>
+                    <div className="relative mt-1.5">
+                      <User className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        id="auth-name"
+                        type="text"
+                        required
+                        autoComplete="name"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className={inputClass}
+                        placeholder="Your full name"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-ink" htmlFor="auth-phone">
+                      Phone
+                    </label>
+                    <div className="relative mt-1.5">
+                      <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        id="auth-phone"
+                        type="tel"
+                        required
+                        autoComplete="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className={inputClass}
+                        placeholder="+1 555 000 1234"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
               <div>
                 <label className="text-sm font-semibold text-ink" htmlFor="auth-email">
                   Email

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -52,10 +52,42 @@ export default function Home() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
+  interface SavedResume {
+    id: string;
+    label: string | null;
+    sourceFilename: string | null;
+    isPrimary: boolean;
+    fullName: string;
+    headline: string;
+  }
+  const [savedResumes, setSavedResumes] = useState<SavedResume[]>([]);
+  const [savedLoaded, setSavedLoaded] = useState(false);
+  const [selectedResumeId, setSelectedResumeId] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/resumes");
+        if (res.ok) {
+          const data = (await res.json()) as { resumes: SavedResume[] };
+          setSavedResumes(data.resumes);
+          const primary = data.resumes.find((r) => r.isPrimary) ?? data.resumes[0];
+          if (primary) setSelectedResumeId(primary.id);
+        }
+      } catch {
+        // Saved resumes are a convenience; the upload path still works.
+      } finally {
+        setSavedLoaded(true);
+      }
+    })();
+  }, []);
+
+  const usingSaved = !file && resumeText.trim().length === 0 && selectedResumeId !== "";
+
 
   async function generate() {
     setError("");
-    if (!file && resumeText.trim().length < 200) {
+    if (!file && resumeText.trim().length < 200 && !usingSaved) {
       setError("Add your resume first: upload the PDF or DOCX, or paste the text.");
       return;
     }
@@ -73,6 +105,7 @@ export default function Home() {
       const form = new FormData();
       if (file) form.append("resumeFile", file);
       if (resumeText.trim()) form.append("resumeText", resumeText.trim());
+      if (usingSaved) form.append("resumeId", selectedResumeId);
       form.append("jdText", jdText);
       form.append("stage", stage);
       form.append("interviewType", interviewType);
@@ -112,6 +145,38 @@ export default function Home() {
         <div className="grid gap-10 md:grid-cols-2 md:gap-8">
           <div>
             <StepHead n={1} title="Your resume" />
+            {savedResumes.length > 0 ? (
+              <div className="mt-4 rounded-2xl border border-forest-200 bg-forest-50 p-4">
+                <label htmlFor="saved-resume" className="text-[13px] font-bold uppercase tracking-wider text-forest-800">
+                  Saved resume
+                </label>
+                <div className="relative mt-2">
+                  <select
+                    id="saved-resume"
+                    value={selectedResumeId}
+                    onChange={(e) => setSelectedResumeId(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-line bg-white px-3.5 py-2.5 pr-9 text-sm font-medium text-ink shadow-sm outline-none transition focus:border-forest-400 focus:ring-4 focus:ring-forest-100"
+                  >
+                    {savedResumes.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {(r.fullName || r.label || "Resume") + (r.isPrimary ? " (Primary)" : "")}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                </div>
+                <p className="mt-2 text-[13px] leading-relaxed text-forest-900/80">
+                  {usingSaved
+                    ? "This pack will be built from your saved resume. Upload or paste below to use a one-off resume instead."
+                    : "A one-off resume is set below for this pack. Your saved resumes are untouched."}
+                </p>
+              </div>
+            ) : savedLoaded ? (
+              <p className="mt-4 rounded-2xl border border-line bg-cream px-4 py-3 text-[13px] leading-relaxed text-ink-soft">
+                Tip: a resume added in onboarding or on the My resumes page is saved and waiting
+                here next time. Uploads on this page are one-off.
+              </p>
+            ) : null}
             <label
               onDragOver={(e) => {
                 e.preventDefault();

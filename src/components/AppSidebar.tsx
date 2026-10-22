@@ -3,7 +3,7 @@ import { LogoMark } from "./Logo";
 import SignOutButton from "./SignOutButton";
 import { AppNavItems, SiteNavItems } from "./AppNav";
 
-export default function AppSidebar({ email }: { email: string }) {
+export default function AppSidebar({ email, name }: { email: string; name?: string }) {
   return (
     <aside className="border-b border-line bg-cream lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-72 lg:shrink-0 lg:flex-col lg:border-b-0 lg:border-r">
       <div className="flex items-center justify-between gap-3 px-4 pt-4 sm:px-6 lg:px-6 lg:pt-6">
@@ -28,9 +28,20 @@ export default function AppSidebar({ email }: { email: string }) {
       </nav>
 
       <div className="mt-auto hidden border-t border-line p-4 lg:block lg:px-5 lg:py-5">
-        <p className="truncate px-1 text-sm font-medium text-ink-soft" title={email}>
-          {email}
-        </p>
+        {name ? (
+          <>
+            <p className="truncate px-1 text-sm font-semibold text-ink" title={name}>
+              {name}
+            </p>
+            <p className="truncate px-1 text-[13px] text-slate-500" title={email}>
+              {email}
+            </p>
+          </>
+        ) : (
+          <p className="truncate px-1 text-sm font-medium text-ink-soft" title={email}>
+            {email}
+          </p>
+        )}
         <div className="mt-3">
           <SignOutButton />
         </div>
