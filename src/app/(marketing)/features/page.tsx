@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 const FEATURES = [
+  { icon: MessagesSquare, title: "Live AI interview practice", body: "Rehearse with a spoken AI interviewer and an optional live camera preview. Get resume-based questions, targeted follow-ups based on your actual answers, and a final score with question-by-question feedback. Answer by microphone or keyboard, and review transcripts before submitting." },
   {
     icon: FileSearch,
     title: "Coding practice: Python 75 & SQL",
