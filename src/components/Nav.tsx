@@ -8,6 +8,7 @@ const linkClass =
   "inline-flex items-center gap-1.5 px-2 py-2 text-sm font-medium text-ink-soft transition hover:text-forest-800";
 
 const SITE_LINKS = [
+  { href: "/practice", label: "Coding practice" },
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
   { href: "/contact", label: "Contact" },

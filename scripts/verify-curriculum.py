@@ -1,0 +1,39 @@
+"""Validate all reference implementations and their practice contracts, without third-party services."""
+import copy
+import json
+import sqlite3
+from pathlib import Path
+
+root = Path(__file__).resolve().parents[1]
+python = json.loads((root/'src/lib/coding/python.json').read_text())
+sql = json.loads((root/'src/lib/coding/sql.json').read_text())
+assert len(python) == 75
+assert len(sql) == 40
+assert len({p['id'] for p in python+sql}) == 115
+checks = 0
+for lesson in python:
+    namespace = {}
+    exec(lesson['solution'], namespace)
+    assert len(lesson['tests']) >= 3
+    for test in lesson['tests']:
+        actual = namespace['solve'](*copy.deepcopy(test['input']))
+        assert actual == test['expected'], (lesson['title'], test, actual)
+        json.dumps(actual, allow_nan=False)
+        checks += 1
+for lesson in sql:
+    for test in lesson['tests']:
+        db = sqlite3.connect(':memory:')
+        db.executescript(test['setup'])
+        actual = None
+        for statement in lesson['solution'].split(';'):
+            if statement.strip():
+                cursor = db.execute(statement)
+                if cursor.description:
+                    actual = {'columns':[c[0] for c in cursor.description], 'values':[list(r) for r in cursor.fetchall()]}
+        if lesson.get('verifyQuery'):
+            cursor = db.execute(lesson['verifyQuery'])
+            actual = {'columns':[c[0] for c in cursor.description], 'values':[list(r) for r in cursor.fetchall()]}
+        assert actual == test['expected'], (lesson['title'],test['label'],actual,test['expected'])
+        db.close()
+        checks += 1
+print(f'PASS: {len(python)} Python problems, {len(sql)} SQL patterns, {checks} reference checks.')

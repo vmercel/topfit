@@ -31,3 +31,22 @@ Answers are built only from what the resume actually says. Where the job asks fo
 npm install
 npm run dev
 ```
+
+## Coding practice
+
+Open `/practice` (public) or `/app/coding` (signed in). Both expose the same two-part Theory and Practice workspace: 75 independently curated, commonly taught interview problems and 40 SQL patterns. This is an original educational collection, not a measured LeetCode frequency ranking or an official LeetCode product.
+
+- Python lessons include a function contract, examples, walkthrough, complexity analysis, reference implementation and three visible practice checks. JSON adapters represent linked lists and trees; the task text explains each adapter.
+- SQL lessons include schema, fixture data, expected result, SQL solution, engineering notes and two fixture checks. The engine is SQLite; date/JSON/catalog syntax and concurrency behavior differ from PostgreSQL/MySQL. Forty exercises cover core querying, windows, CTEs, time series, indexes, transactions, constraints, views and data quality; they are a foundation, not an exhaustive database engineering certification.
+- Python uses Pyodide 0.27.7 and SQL uses sql.js 1.13.0, downloaded from cdn.jsdelivr.net in client Web Workers. No submitted code executes on Vercel. Loading has a 90-second timeout; execution has a 12-second timeout and Stop terminates the worker. Internet/CDN access is needed for runtime downloads.
+- Drafts and completion are stored in browser localStorage, without account sync. Only a full practice-test pass marks a problem complete. Custom Python inputs return output without marking completion. Checks are learning feedback, not exhaustive grading.
+
+### Curriculum verification
+
+```bash
+python3 scripts/verify-curriculum.py
+npm run lint
+npm run build
+```
+
+The curriculum verifier runs every Python reference against its examples and every SQL reference against independent fixtures, including persistent-state checks for engineering exercises.
