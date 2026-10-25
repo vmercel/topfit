@@ -20,14 +20,14 @@ const labels: Record<string, string> = {
   clarity: "Clarity & structure",
 };
 export default function InterviewFeedback() {
-  const { result, setResult } = useInterviewFeedback();
+  const { result, restart } = useInterviewFeedback();
   const router = useRouter();
   const [error, setError] = useState("");
   const [copyLabel, setCopyLabel] = useState("Copy feedback");
   const report = result?.report;
   const role = result?.role || "Interview practice";
   function reset() {
-    setResult(null);
+    restart();
     router.replace("/app/interview");
   }
   async function copyFeedback() {
@@ -84,7 +84,10 @@ export default function InterviewFeedback() {
         </span>
         <span>
           <MessageSquare size={14} />
-          {report.turns.filter((t) => t.answer !== "[Skipped]").length} answers
+          {report.turns.filter((t) => t.answer !== "[Skipped]").length}{" "}
+          {report.turns.filter((t) => t.answer !== "[Skipped]").length === 1
+            ? "answer"
+            : "answers"}
         </span>
       </div>
       <div className="iv-report-top">
@@ -158,7 +161,10 @@ export default function InterviewFeedback() {
       <section className="iv-answer-feedback">
         <div className="iv-section-heading">
           <h2>Question-by-question feedback</h2>
-          <span>{report.turns.length} submitted answers</span>
+          <span>
+            {report.turns.length} submitted{" "}
+            {report.turns.length === 1 ? "answer" : "answers"}
+          </span>
         </div>
         {report.evaluations.map((evaluation, i) => (
           <details key={i} open={i === 0}>

@@ -34,9 +34,14 @@ type SavedResume = {
 };
 type VoiceStatus = "idle" | "loading" | "speaking" | "unavailable";
 
-export default function InterviewPractice() {
+// Next retains page state in its navigation cache. A new round must remount the room.
+export default function InterviewRound() {
+  const { round } = useInterviewFeedback();
+  return <InterviewPractice key={round} />;
+}
+function InterviewPractice() {
   const router = useRouter();
-  const { setResult } = useInterviewFeedback();
+  const { result, setResult } = useInterviewFeedback();
   const [duration, setDuration] = useState(10);
   const [remaining, setRemaining] = useState(600);
   const [startedAt, setStartedAt] = useState(0);
@@ -185,13 +190,13 @@ export default function InterviewPractice() {
   }, [session, voiceEnabled, replay, ending]);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session || result) return;
     const warn = (event: BeforeUnloadEvent) => {
       event.preventDefault();
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [session]);
+  }, [session, result]);
 
   async function api(path: string, body: FormData | object) {
     const controller = new AbortController();
@@ -320,6 +325,7 @@ export default function InterviewPractice() {
     reason: "time" | "manual" = "manual",
   ) {
     if (!session || busy || endingRef.current) return;
+    const requestedAt = Date.now();
     if (action === "finish") {
       endingRef.current = true;
       setEnding(true);
@@ -387,7 +393,17 @@ export default function InterviewPractice() {
               : action === "finish"
                 ? reason
                 : "completed",
-          elapsed: Math.max(0, Math.floor((Date.now() - startedAt) / 1000)),
+          elapsed: Math.max(
+            0,
+            Math.floor(
+              (Math.min(
+                action === "finish" ? requestedAt : Date.now(),
+                session.endsAt ?? Date.now(),
+              ) -
+                startedAt) /
+                1000,
+            ),
+          ),
         });
         setEnding(true);
         endingRef.current = true;
@@ -419,7 +435,7 @@ export default function InterviewPractice() {
     void send("finish", "time");
   });
   useEffect(() => {
-    if (!session?.endsAt) return;
+    if (!session?.endsAt || result) return;
     const deadline = session.endsAt;
     const tick = () => {
       const left = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
@@ -428,7 +444,7 @@ export default function InterviewPractice() {
     };
     const timer = setInterval(tick, 500);
     return () => clearInterval(timer);
-  }, [session?.endsAt]);
+  }, [session?.endsAt, result]);
 
   async function transcribe(blob: Blob) {
     if (!session) return;
@@ -595,7 +611,7 @@ export default function InterviewPractice() {
     </section>
   );
 
-  if (!session)
+  if (!session || result)
     return (
       <main className="interview-studio">
         <header className="iv-page-heading">
