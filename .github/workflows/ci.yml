@@ -35,5 +35,7 @@ jobs:
         run: npm run lint:coding
       - name: Verify every Python and SQL reference solution
         run: python3 scripts/verify-curriculum.py
+      - name: Verify Python and SQLite execution workers
+        run: npm run test:worker
       - name: Build production application
         run: npm run build

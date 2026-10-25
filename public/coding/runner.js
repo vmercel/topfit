@@ -75,13 +75,28 @@ _tf_json.dumps(_tf_results, allow_nan=False)
         const db = new SQL.Database();
         try {
           db.run(test.setup);
-          const queries = db.exec(code);
-          const checked = verifyQuery ? db.exec(verifyQuery) : queries;
-          const actual = checked.length
-            ? checked[checked.length - 1]
-            : { columns: [], values: [] };
-          if (actual.values.length > 2000)
-            throw new Error("Result exceeds 2,000 rows. Narrow the query.");
+          // db.exec omits empty result sets, which loses their column names.
+          // Prepare every statement so a valid zero-row SELECT is still graded correctly.
+          const execute = (source) => {
+            let last = { columns: [], values: [] };
+            for (const statement of db.iterateStatements(source)) {
+              const columns = statement.getColumnNames();
+              const values = [];
+              while (statement.step()) {
+                if (columns.length) {
+                  if (values.length >= 2000)
+                    throw new Error(
+                      "Result exceeds 2,000 rows. Narrow the query.",
+                    );
+                  values.push(statement.get());
+                }
+              }
+              if (columns.length) last = { columns, values };
+            }
+            return last;
+          };
+          const result = execute(code);
+          const actual = verifyQuery ? execute(verifyQuery) : result;
           for (const probe of mustReject || []) {
             let rejected = false;
             try {

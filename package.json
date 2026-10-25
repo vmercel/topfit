@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "lint:coding": "eslint src/components/CodingPractice.tsx src/components/SolutionDiagram.tsx src/components/AppNav.tsx src/components/Nav.tsx src/lib/coding/types.ts \"src/app/(app)/app/coding/page.tsx\" \"src/app/(marketing)/practice/page.tsx\" \"src/app/(app)/layout.tsx\" \"src/app/(marketing)/features/page.tsx\"",
-    "test:curriculum": "python3 scripts/verify-curriculum.py"
+    "test:curriculum": "python3 scripts/verify-curriculum.py",
+    "test:worker": "node scripts/verify-worker.cjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -29,6 +30,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "pyodide": "^0.27.7",
+    "sql.js": "^1.13.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
