@@ -50,3 +50,9 @@ npm run build
 ```
 
 The curriculum verifier runs every Python reference against its examples and every SQL reference against independent fixtures, including persistent-state checks for engineering exercises.
+
+### CI/CD
+
+`.github/workflows/ci.yml` runs on pull requests targeting main and pushes to main. It installs locked dependencies, lints the coding feature, verifies all 311 curriculum checks and builds Next.js using Node 24. The existing Vercel Git integration deploys feature branches as previews and main as production, preserving the project’s existing environment configuration. No new deployment token is needed. Merge only after CI succeeds.
+
+`npm run lint:coding` is scoped because the pre-existing resume and onboarding pages currently have unrelated hook lint violations. `npm run lint` continues to report those baseline issues.

@@ -1264,12 +1264,12 @@
     "prompt": "Clone an undirected graph given an adjacency list of zero-based neighbors. Return an independent adjacency list in the same order.",
     "idea": "Memoization preserves identity and stops cycles; this JSON adapter represents each node by its index.",
     "steps": [
-      "Create one empty clone per node.",
-      "Copy each neighbor reference to its matching cloned index.",
-      "Mutating the clone must not change the input."
+      "Build graph nodes from the adjacency list.",
+      "Create and memoize a new node before recursively cloning its neighbors; this breaks cycles.",
+      "Serialize the cloned graph in the original node order. No cloned node refers to an original node."
     ],
     "complexity": "O(V+E) time · O(V+E) space",
-    "solution": "def solve(adj):\n    clones = [[] for _ in adj]\n    for node, neighbors in enumerate(adj):\n        clones[node].extend(neighbors)\n    return clones",
+    "solution": "def solve(adj):\n    class Node:\n        def __init__(self, value):\n            self.value = value\n            self.neighbors = []\n    nodes = [Node(i) for i in range(len(adj))]\n    for i, neighbors in enumerate(adj):\n        nodes[i].neighbors = [nodes[j] for j in neighbors]\n    copies = {}\n    def clone(node):\n        if node in copies:\n            return copies[node]\n        copied = Node(node.value)\n        copies[node] = copied\n        copied.neighbors = [clone(n) for n in node.neighbors]\n        return copied\n    # Include disconnected components in the JSON adapter.\n    cloned = [clone(node) for node in nodes]\n    return [[n.value for n in node.neighbors] for node in cloned]",
     "tests": [
       {
         "input": [

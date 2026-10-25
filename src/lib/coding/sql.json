@@ -2780,7 +2780,12 @@
         }
       }
     ],
-    "verifyQuery": "SELECT account_id,amount,(SELECT COUNT(*) FROM pragma_table_info('balances') WHERE name='amount' AND \"notnull\"=1) AS required FROM balances;"
+    "verifyQuery": "SELECT account_id,amount,(SELECT COUNT(*) FROM pragma_table_info('balances') WHERE name='amount' AND \"notnull\"=1) AS required FROM balances;",
+    "mustReject": [
+      "INSERT INTO balances VALUES(2,-1);",
+      "INSERT INTO balances VALUES(3,NULL);",
+      "INSERT INTO balances VALUES(1,200);"
+    ]
   },
   {
     "id": "sql-data-quality-and-reconciliation",

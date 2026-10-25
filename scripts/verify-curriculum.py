@@ -34,6 +34,13 @@ for lesson in sql:
             cursor = db.execute(lesson['verifyQuery'])
             actual = {'columns':[c[0] for c in cursor.description], 'values':[list(r) for r in cursor.fetchall()]}
         assert actual == test['expected'], (lesson['title'],test['label'],actual,test['expected'])
+        for probe in lesson.get('mustReject', []):
+            try:
+                db.execute(probe)
+            except sqlite3.IntegrityError:
+                checks += 1
+            else:
+                raise AssertionError((lesson['title'], 'Missing constraint', probe))
         db.close()
         checks += 1
 print(f'PASS: {len(python)} Python problems, {len(sql)} SQL patterns, {checks} reference checks.')

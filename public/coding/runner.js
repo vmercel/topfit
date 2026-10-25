@@ -1,22 +1,35 @@
 /* Client-only execution. Never executes submitted code on the application server. */
 let pythonReady;
 let sqlReady;
-let output = '';
-const append = text => { if (output.length < 4000) output += text.slice(0, 4000-output.length) + '\n'; };
+let output = "";
+const append = (text) => {
+  if (output.length < 4000)
+    output += text.slice(0, 4000 - output.length) + "\n";
+};
 self.onmessage = async ({ data }) => {
-  const { track, code, tests, custom, verifyQuery } = data;
-  output = '';
+  const { track, code, tests, custom, verifyQuery, mustReject } = data;
+  output = "";
   try {
-    self.postMessage({ status: 'loading' });
-    if (track === 'python') {
-      if (!pythonReady) pythonReady = (async () => {
-        importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js');
-        return await loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/', stdout: append, stderr: append });
-      })();
+    self.postMessage({ status: "loading" });
+    if (track === "python") {
+      if (!pythonReady)
+        pythonReady = (async () => {
+          importScripts(
+            "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js",
+          );
+          return await loadPyodide({
+            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/",
+            stdout: append,
+            stderr: append,
+          });
+        })();
       const py = await pythonReady;
-      self.postMessage({ status: 'running' });
-      py.globals.set('_tf_code', code);
-      py.globals.set('_tf_cases', JSON.stringify(custom !== undefined ? [{ input: custom }] : tests));
+      self.postMessage({ status: "running" });
+      py.globals.set("_tf_code", code);
+      py.globals.set(
+        "_tf_cases",
+        JSON.stringify(custom !== undefined ? [{ input: custom }] : tests),
+      );
       const serialized = await py.runPythonAsync(`
 import json as _tf_json, copy as _tf_copy
 _tf_results = []
@@ -36,15 +49,27 @@ except Exception as _tf_error:
     _tf_results = [{'label': 'Python error', 'passed': False, 'error': str(_tf_error)[:2000]}]
 _tf_json.dumps(_tf_results, allow_nan=False)
 `);
-      py.globals.delete('_tf_code'); py.globals.delete('_tf_cases');
-      self.postMessage({ status: 'done', results: JSON.parse(serialized), output, custom: custom !== undefined });
+      py.globals.delete("_tf_code");
+      py.globals.delete("_tf_cases");
+      self.postMessage({
+        status: "done",
+        results: JSON.parse(serialized),
+        output,
+        custom: custom !== undefined,
+      });
     } else {
-      if (!sqlReady) sqlReady = (async () => {
-        importScripts('https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/sql-wasm.js');
-        return await initSqlJs({ locateFile: f => `https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/${f}` });
-      })();
+      if (!sqlReady)
+        sqlReady = (async () => {
+          importScripts(
+            "https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/sql-wasm.js",
+          );
+          return await initSqlJs({
+            locateFile: (f) =>
+              `https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/${f}`,
+          });
+        })();
       const SQL = await sqlReady;
-      self.postMessage({ status: 'running' });
+      self.postMessage({ status: "running" });
       const results = [];
       for (const test of tests) {
         const db = new SQL.Database();
@@ -52,16 +77,46 @@ _tf_json.dumps(_tf_results, allow_nan=False)
           db.run(test.setup);
           const queries = db.exec(code);
           const checked = verifyQuery ? db.exec(verifyQuery) : queries;
-          const actual = checked.length ? checked[checked.length-1] : { columns: [], values: [] };
-          if (actual.values.length > 2000) throw new Error('Result exceeds 2,000 rows. Narrow the query.');
-          results.push({ label: test.label, actual, expected: test.expected, passed: JSON.stringify(actual) === JSON.stringify(test.expected) });
+          const actual = checked.length
+            ? checked[checked.length - 1]
+            : { columns: [], values: [] };
+          if (actual.values.length > 2000)
+            throw new Error("Result exceeds 2,000 rows. Narrow the query.");
+          for (const probe of mustReject || []) {
+            let rejected = false;
+            try {
+              db.run(probe);
+            } catch {
+              rejected = true;
+            }
+            if (!rejected)
+              throw new Error(
+                "A required integrity constraint is missing: invalid or duplicate data was accepted.",
+              );
+          }
+          results.push({
+            label: test.label,
+            actual,
+            expected: test.expected,
+            passed: JSON.stringify(actual) === JSON.stringify(test.expected),
+          });
         } catch (error) {
-          results.push({ label: test.label, passed: false, error: error.message, expected: test.expected });
-        } finally { db.close(); }
+          results.push({
+            label: test.label,
+            passed: false,
+            error: error.message,
+            expected: test.expected,
+          });
+        } finally {
+          db.close();
+        }
       }
-      self.postMessage({ status: 'done', results, output });
+      self.postMessage({ status: "done", results, output });
     }
   } catch (error) {
-    self.postMessage({ status: 'error', error: `${error.message}. If the runtime could not load, check your connection and allow cdn.jsdelivr.net, then retry.` });
+    self.postMessage({
+      status: "error",
+      error: `${error.message}. If the runtime could not load, check your connection and allow cdn.jsdelivr.net, then retry.`,
+    });
   }
 };
