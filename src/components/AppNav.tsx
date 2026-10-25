@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Code2, FileText, History, Mail, Plus, Sparkles, Tag } from "lucide-react";
+import { Code2, FileText, History, Mail, Plus, Sparkles, Tag, Video } from "lucide-react";
 
 const APP_ITEMS = [
+  { href: "/app/interview", label: "Interview practice", icon: Video },
   { href: "/app/coding", label: "Coding practice", icon: Code2 },
   { href: "/app", label: "New prep", icon: Plus },
   { href: "/app/dashboard", label: "My prep packs", icon: History },

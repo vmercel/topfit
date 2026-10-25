@@ -14,7 +14,7 @@ async function AppShell({ children }: { children: React.ReactNode }) {
         name={typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : ""}
       />
       <div className="min-w-0 flex-1">
-        <div className="mx-auto w-full max-w-5xl has-[.coding-studio]:max-w-[1700px] has-[.coding-studio]:px-0 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+        <div className="mx-auto w-full max-w-5xl has-[.interview-studio]:max-w-[1320px] has-[.coding-studio]:max-w-[1700px] has-[.coding-studio]:px-0 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
           {children}
         </div>
       </div>

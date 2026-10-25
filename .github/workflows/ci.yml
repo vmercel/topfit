@@ -1,4 +1,4 @@
-name: Coding practice CI
+name: TopFit CI
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Curriculum, lint and production build
+    name: Tests, lint and production build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -33,6 +33,10 @@ jobs:
         run: npm ci
       - name: Check coding feature lint
         run: npm run lint:coding
+      - name: Check interview feature lint
+        run: npm run lint:interview
+      - name: Verify interview APIs and scoring
+        run: npm run test:interview
       - name: Verify every Python and SQL reference solution
         run: python3 scripts/verify-curriculum.py
       - name: Verify Python and SQLite execution workers
