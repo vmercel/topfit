@@ -91,3 +91,26 @@ export function buildReport(
     plannedMain: session.plan.length,
   };
 }
+
+// A stopped or timed-out empty round has no evidence to grade. Do not fabricate a score.
+export function emptyReport(session: InterviewSession): InterviewReport {
+  return {
+    score: 0,
+    dimensions: ["relevance", "depth", "evidence", "clarity"].map((name) => ({
+      name,
+      score: 0,
+    })),
+    summary:
+      "No answers were submitted, so there is no performance evidence to assess. Your next practice round is a fresh opportunity.",
+    strengths: ["You set aside time to rehearse."],
+    nextSteps: [
+      "Answer the first question with a concrete example from your resume.",
+      "Describe the situation, your action and an observed result.",
+    ],
+    evaluations: [],
+    turns: [],
+    completed: false,
+    answeredMain: 0,
+    plannedMain: session.plan.length,
+  };
+}

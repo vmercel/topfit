@@ -18,6 +18,9 @@ export async function POST(req: NextRequest) {
     const job = clampText(String(form.get("job") || ""), 14000);
     const stage = String(form.get("stage") || "technical");
     const count = Number(form.get("count") || 3);
+    const duration = Number(form.get("durationMinutes") || 10);
+    if (![5, 10, 20, 30].includes(duration))
+      throw new Error("Choose a duration of 5, 10, 20 or 30 minutes.");
     if (role.length < 3 || role.length > 500)
       throw new Error("Choose a target role (3–500 characters).");
     if (![3, 5].includes(count))
@@ -56,7 +59,15 @@ export async function POST(req: NextRequest) {
     const plan = await createPlan(resume, role, job, stage, count, req.signal);
     return NextResponse.json(
       viewSession(
-        newSession({ userId: auth.user.id, resume, role, job, stage, plan }),
+        newSession({
+          userId: auth.user.id,
+          resume,
+          role,
+          job,
+          stage,
+          plan,
+          endsAt: Date.now() + duration * 60 * 1000,
+        }),
       ),
       { headers: { "Cache-Control": "no-store" } },
     );

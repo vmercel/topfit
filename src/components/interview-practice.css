@@ -1308,3 +1308,876 @@
     flex-wrap: wrap;
   }
 }
+
+/* Conference room — a focused, familiar call surface. */
+.iv-duration-label {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 24px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.iv-duration-label small {
+  font-size: 11px;
+  font-weight: 400;
+  color: #798476;
+  line-height: 1.6;
+}
+.iv-photo-portrait {
+  position: relative;
+  overflow: visible;
+}
+.iv-photo-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+.iv-portrait-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: #b8c8b5;
+  border-radius: 50%;
+  font-size: 70px;
+  color: #214c3e;
+}
+.iv-conference {
+  background: #111b1d;
+  color: #edf3ef;
+  border: 1px solid #263437;
+  border-radius: 22px;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 18px 60px #152a2014;
+}
+.iv-conference:fullscreen {
+  overflow: auto;
+  max-width: none;
+  border-radius: 0;
+  padding: 20px;
+}
+.iv-call-header {
+  padding: 22px 26px;
+  border-bottom: 1px solid #2a3638;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  background: #172225;
+}
+.iv-call-brand {
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 800;
+  color: #c7d8ce;
+  display: block;
+  margin-bottom: 8px;
+}
+.iv-call-brand span {
+  border-left: 1px solid #6c8079;
+  margin-left: 8px;
+  padding-left: 10px;
+  color: #91b39e;
+  font-weight: 400;
+}
+.iv-call-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.4px;
+}
+.iv-call-header p {
+  font-size: 10px;
+  color: #a5b6af;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+}
+.iv-call-clock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #243337;
+  border: 1px solid #3b4e50;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #d8e7df;
+}
+.iv-call-clock strong {
+  font-size: 19px;
+  letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.iv-call-clock span {
+  font-size: 9px;
+  color: #9bb1a7;
+}
+.iv-clock-warning {
+  color: #ffc18e;
+  border-color: #b77b52;
+  background: #443127;
+}
+.iv-meeting-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 242px;
+}
+.iv-meeting-stage {
+  padding: 22px 22px 0;
+  min-width: 0;
+}
+.iv-participant-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.iv-host-tile {
+  min-height: 310px;
+  border-radius: 15px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #263c3b;
+  border: 2px solid #39534b;
+  isolation: isolate;
+}
+.iv-host-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 50% 30%, #4d7063 0, transparent 65%),
+    linear-gradient(145deg, #273a3b, #19302d);
+}
+.iv-host-speaking {
+  border-color: #9bc29f;
+  box-shadow: 0 0 0 3px #9bc29f12;
+}
+.iv-tile-top {
+  position: absolute;
+  left: 13px;
+  right: 13px;
+  top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.iv-live-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  background: #101f1b70;
+  padding: 6px 9px;
+  border-radius: 6px;
+  color: #d6e5db;
+}
+.iv-live-pill i,
+.iv-roster > i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #9bc29f;
+}
+.iv-tile-top button {
+  padding: 7px;
+  border-radius: 6px;
+  background: #12262280;
+  color: #c0d3c7;
+}
+.iv-host-tile .iv-portrait {
+  width: 130px;
+  height: 130px;
+  margin: 0 0 25px;
+  box-shadow:
+    0 0 0 9px #bcd8c009,
+    0 0 0 25px #bcd8c007;
+}
+.iv-host-tile .iv-ai-badge {
+  bottom: 0;
+  right: 0;
+  font-size: 9px;
+}
+.iv-host-identity {
+  position: absolute;
+  bottom: 20px;
+  left: 18px;
+  right: 18px;
+}
+.iv-host-name {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.iv-host-name > span {
+  font-size: 7px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  border: 1px solid #76988a;
+  border-radius: 4px;
+  padding: 3px 5px;
+  color: #b8cebf;
+}
+.iv-host-identity p {
+  font-size: 10px;
+  margin-top: 5px;
+  color: #a6c1b1;
+}
+.iv-sound-bars {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  height: 20px;
+  position: absolute;
+  right: 20px;
+  bottom: 26px;
+}
+.iv-sound-bars i {
+  width: 3px;
+  height: 5px;
+  border-radius: 3px;
+  background: #b9d6bc;
+}
+.iv-host-speaking .iv-sound-bars i {
+  animation: iv-call-wave 0.7s ease-in-out infinite alternate;
+}
+@keyframes iv-call-wave {
+  to {
+    height: 20px;
+  }
+}
+.iv-self-tile {
+  border-radius: 15px;
+  background: #1d292e;
+  border: 1px solid #3c4a50;
+  overflow: hidden;
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.iv-self-tile .iv-camera {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+.iv-self-tile .iv-camera-screen {
+  aspect-ratio: auto;
+  min-height: 240px;
+  flex: 1;
+  border-radius: 0;
+  background: radial-gradient(ellipse at top, #33434a, #1d292e);
+}
+.iv-self-tile .iv-camera-off {
+  color: #a9bac0;
+  font-size: 11px;
+  gap: 10px;
+}
+.iv-self-tile .iv-camera-off > svg {
+  background: #3c4c54;
+  border-radius: 50%;
+  padding: 14px;
+  width: 60px;
+  height: 60px;
+  color: #bed0d7;
+}
+.iv-self-tile .iv-camera-off small {
+  color: #81979f;
+  font-size: 9px;
+}
+.iv-self-tile .iv-camera-label {
+  background: transparent;
+  bottom: 10px;
+  left: 13px;
+  font-size: 9px;
+}
+.iv-self-tile .iv-subtle-button {
+  color: #b6c8c4;
+  font-size: 10px;
+  background: #26373b;
+  border-radius: 0;
+  padding: 10px;
+  margin: 0;
+  justify-content: center;
+}
+.iv-you-status {
+  font-size: 8px;
+  color: #819a9b;
+  text-align: center;
+  padding: 8px;
+  background: #1b282d;
+}
+.iv-live-question {
+  padding: 20px 0 16px;
+  min-height: 155px;
+}
+.iv-live-question > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.iv-live-question > div > span {
+  font-size: 8px;
+  letter-spacing: 1.6px;
+  color: #98b9a4;
+  font-weight: 600;
+}
+.iv-live-question button {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: #bac9c1;
+  font-size: 10px;
+  padding: 4px;
+}
+.iv-live-question h2 {
+  font-size: 17px;
+  line-height: 1.65;
+  letter-spacing: -0.2px;
+  font-weight: 450;
+  color: #edf0e9;
+}
+.iv-live-question > p {
+  font-size: 10px;
+  color: #829d93;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+.iv-call-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 17px 0;
+  border-top: 1px solid #32403f;
+}
+.iv-call-toolbar > div {
+  display: flex;
+  gap: 8px;
+}
+.iv-call-toolbar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 9px;
+  background: #2a383b;
+  color: #d1ded7;
+  padding: 12px;
+  font-size: 9px;
+  border: 1px solid #405052;
+}
+.iv-call-toolbar button:hover {
+  background: #3a4c4e;
+}
+.iv-call-toolbar .iv-control-active {
+  background: #395d48;
+  color: #dcf1df;
+}
+.iv-call-toolbar .iv-end-call {
+  background: #bd554e;
+  border-color: #c46a61;
+  color: #fff;
+}
+.iv-call-toolbar .iv-end-call:hover {
+  background: #cb625a;
+}
+.iv-call-privacy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 8px;
+  color: #879e94;
+  line-height: 1.7;
+  padding: 0 0 18px;
+}
+.iv-meeting-notes {
+  border-left: 1px solid #2a393b;
+  padding: 22px 18px;
+  background: #192528;
+  min-width: 0;
+}
+.iv-meeting-notes > h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+.iv-meeting-notes > h2 > span {
+  margin-left: auto;
+  border: 1px solid #465752;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 9px;
+  color: #afc3b6;
+}
+.iv-roster {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+}
+.iv-roster > span {
+  display: grid;
+  place-items: center;
+  background: #3c584c;
+  color: #d0e1d0;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 10px;
+}
+.iv-roster > div {
+  font-size: 11px;
+  flex: 1;
+}
+.iv-roster small {
+  display: block;
+  color: #8ea69b;
+  font-size: 9px;
+  margin-top: 2px;
+}
+.iv-meeting-notes h3 {
+  border-top: 1px solid #354441;
+  padding-top: 22px;
+  margin-top: 24px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.iv-notes-help {
+  color: #8ca399;
+  font-size: 10px;
+  line-height: 1.8;
+  margin-top: 9px;
+}
+.iv-call-transcript {
+  max-height: 300px;
+  overflow: auto;
+  margin-top: 18px;
+}
+.iv-transcript-empty {
+  text-align: center;
+  color: #718b81;
+  padding: 28px 8px;
+  font-size: 10px;
+  line-height: 1.8;
+}
+.iv-transcript-empty > svg {
+  margin: 0 auto 10px;
+  opacity: 0.7;
+}
+.iv-call-transcript details {
+  border-bottom: 1px solid #354441;
+  font-size: 10px;
+  padding: 12px 0;
+}
+.iv-call-transcript summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  cursor: pointer;
+  color: #c3d6c6;
+}
+.iv-call-transcript strong {
+  display: block;
+  font-weight: 500;
+  color: #bdcfc1;
+  margin-top: 10px;
+  line-height: 1.7;
+}
+.iv-call-transcript details p {
+  color: #91a89b;
+  margin-top: 8px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.iv-conference .iv-answer-composer {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid #354441;
+  background: #1a2729;
+  border-radius: 0;
+  padding: 20px 24px;
+}
+.iv-conference .iv-composer-heading h2 {
+  color: #d3e0d4;
+  font-size: 12px;
+}
+.iv-conference .iv-composer-heading p,
+.iv-conference .iv-answer-length {
+  color: #8da89a;
+  font-size: 10px;
+}
+.iv-conference .iv-answer-composer textarea {
+  background: #101e21;
+  color: #e0ebe2;
+  border: 1px solid #3e5550;
+  min-height: 100px;
+  font-size: 12px;
+}
+.iv-conference textarea::placeholder {
+  color: #778f85;
+}
+.iv-conference .iv-text-button {
+  color: #a7c1af;
+}
+.iv-conference .iv-record-button {
+  background: #2b3d36;
+  border-color: #526c5b;
+  color: #d3e5d5;
+}
+.iv-conference .iv-primary-button {
+  background: #b8cda9;
+  color: #183c2a;
+}
+.iv-conference .iv-notice {
+  color: #bdd8b9;
+  background: #304334;
+}
+.iv-conference .iv-error {
+  color: #ffcdc2;
+  background: #51322f;
+}
+.iv-conference button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.iv-ending-overlay {
+  position: absolute;
+  inset: 0;
+  background: #122320f5;
+  display: grid;
+  place-items: center;
+  z-index: 10;
+  padding: 24px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+.iv-ending-overlay > div {
+  max-width: 400px;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+.iv-ending-overlay h2 {
+  font-family: Georgia, serif;
+  font-size: 32px;
+  color: #dce9d9;
+}
+.iv-ending-overlay p {
+  color: #a5bba9;
+  font-size: 13px;
+  line-height: 1.8;
+}
+/* Dedicated post-call scoreboard. */
+.iv-debrief .iv-page-heading {
+  text-align: center;
+  margin: 20px 0 24px;
+}
+.iv-debrief .iv-eyebrow {
+  justify-content: center;
+}
+.iv-debrief .iv-page-heading h1 {
+  font-size: clamp(30px, 4vw, 46px);
+}
+.iv-result-meta {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 0 0 30px;
+  flex-wrap: wrap;
+}
+.iv-result-meta > span {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 11px;
+  color: #66806a;
+}
+.iv-debrief .iv-report-top {
+  gap: 0;
+  border: 1px solid #d5decd;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #fffef9;
+  box-shadow: 0 12px 35px #29451c06;
+}
+.iv-debrief .iv-score {
+  border: 0;
+  border-radius: 0;
+  background: #193e32;
+  color: #dae8d0;
+  padding: 30px 20px;
+}
+.iv-score-orbit {
+  width: 166px;
+  height: 166px;
+  border-radius: 50%;
+  margin: 22px auto;
+  background: conic-gradient(#d4c398 var(--score), #426351 0);
+  padding: 8px;
+  display: grid;
+  place-items: center;
+}
+.iv-score-orbit > strong {
+  display: flex;
+  width: 150px;
+  height: 150px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #193e32;
+  font-size: 58px !important;
+  letter-spacing: -3px;
+  margin: 0 !important;
+  color: #f5f1dc;
+}
+.iv-score-orbit > strong small {
+  font-size: 14px;
+  letter-spacing: 0;
+  margin-top: 30px;
+  color: #a9bda5;
+}
+.iv-debrief .iv-score > p {
+  color: #d4dfc8;
+  font-size: 12px;
+}
+.iv-debrief .iv-score > small {
+  color: #9bb399;
+}
+.iv-debrief .iv-report-summary {
+  border: 0;
+  padding: 32px;
+  background: transparent;
+}
+.iv-debrief .iv-report-summary h2 {
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+.iv-debrief .iv-dimensions {
+  gap: 18px;
+  margin-top: 24px;
+}
+.iv-debrief .iv-dimensions label {
+  font-size: 11px;
+}
+.iv-debrief .iv-dimensions progress {
+  height: 7px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.iv-debrief .iv-feedback-grid > section {
+  border-radius: 16px;
+  padding: 24px;
+  background: #f9fbf3;
+}
+.iv-debrief .iv-feedback-grid > section:last-child {
+  background: #fcf6eb;
+  border-color: #e9ddc7;
+}
+.iv-debrief .iv-answer-feedback details {
+  border-radius: 13px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  background: #fffef9;
+}
+.iv-empty-feedback {
+  max-width: 600px;
+  text-align: center;
+  padding-top: 90px;
+  display: grid;
+  justify-items: center;
+  gap: 24px;
+}
+.iv-empty-feedback h1 {
+  font-size: 32px;
+  font-family: Georgia, serif;
+  line-height: 1.3;
+}
+.iv-empty-feedback p {
+  font-size: 13px;
+  color: #75836c;
+  line-height: 1.8;
+}
+@media (max-width: 1100px) {
+  .iv-meeting-body {
+    grid-template-columns: minmax(0, 1fr) 200px;
+  }
+  .iv-call-toolbar button {
+    padding: 10px;
+  }
+  .iv-call-toolbar button span {
+    font-size: 8px;
+  }
+  .iv-host-tile {
+    min-height: 280px;
+  }
+  .iv-self-tile .iv-camera-screen {
+    min-height: 210px;
+  }
+}
+@media (max-width: 850px) {
+  .iv-meeting-body {
+    display: block;
+  }
+  .iv-meeting-notes {
+    border-left: 0;
+    border-top: 1px solid #354441;
+    display: none;
+  }
+  .iv-call-header {
+    padding: 18px;
+  }
+  .iv-meeting-stage {
+    padding: 16px 16px 0;
+  }
+  .iv-host-tile {
+    min-height: 290px;
+  }
+  .iv-self-tile .iv-camera-screen {
+    min-height: 220px;
+  }
+}
+@media (max-width: 540px) {
+  .iv-conference {
+    border-radius: 14px;
+  }
+  .iv-call-header {
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .iv-call-header h1 {
+    font-size: 15px;
+  }
+  .iv-call-header p {
+    font-size: 8px;
+  }
+  .iv-call-clock {
+    padding: 8px;
+    gap: 5px;
+  }
+  .iv-call-clock strong {
+    font-size: 16px;
+  }
+  .iv-call-clock span {
+    display: none;
+  }
+  .iv-participant-grid {
+    grid-template-columns: 1fr;
+    position: relative;
+    padding-bottom: 0;
+  }
+  .iv-host-tile {
+    min-height: 330px;
+  }
+  .iv-host-tile .iv-portrait {
+    width: 115px;
+    height: 115px;
+  }
+  .iv-self-tile {
+    position: absolute;
+    right: 10px;
+    bottom: 80px;
+    width: 105px;
+    min-height: 115px;
+    box-shadow: 0 5px 20px #0004;
+  }
+  .iv-self-tile .iv-camera-screen {
+    min-height: 85px;
+  }
+  .iv-self-tile .iv-camera-off > svg {
+    width: 35px;
+    height: 35px;
+    padding: 8px;
+  }
+  .iv-self-tile .iv-camera-off > span,
+  .iv-self-tile .iv-camera-off small,
+  .iv-you-status {
+    display: none;
+  }
+  .iv-self-tile .iv-subtle-button {
+    font-size: 7px;
+    padding: 7px;
+  }
+  .iv-self-tile .iv-camera-label {
+    font-size: 7px;
+  }
+  .iv-live-question h2 {
+    font-size: 15px;
+  }
+  .iv-call-toolbar {
+    gap: 5px;
+  }
+  .iv-call-toolbar > div {
+    gap: 5px;
+  }
+  .iv-call-toolbar button {
+    padding: 10px;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .iv-call-toolbar .iv-end-call {
+    flex-direction: row;
+    padding: 14px 10px;
+  }
+  .iv-call-privacy {
+    text-align: center;
+    font-size: 7px;
+    align-items: flex-start;
+  }
+  .iv-conference .iv-answer-composer {
+    padding: 18px 16px;
+  }
+  .iv-conference .iv-answer-actions {
+    align-items: stretch;
+    gap: 12px;
+  }
+  .iv-debrief .iv-report-summary {
+    padding: 24px;
+  }
+  .iv-result-meta {
+    gap: 14px;
+  }
+  .iv-debrief .iv-score {
+    padding: 24px 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .iv-host-speaking .iv-sound-bars i {
+    animation: none;
+  }
+}
+
+.iv-debrief .iv-feedback-grid li,
+.iv-debrief .iv-evaluation-body > p,
+.iv-debrief .iv-evaluation-body li {
+  color: #627052;
+}
+.iv-debrief .iv-feedback-grid > section:last-child li {
+  color: #806d4c;
+}
+.iv-debrief .iv-evaluation-body blockquote {
+  color: #5f784d;
+}
+.iv-conference button:focus-visible {
+  outline: 2px solid #d2e6bc;
+  outline-offset: 3px;
+}

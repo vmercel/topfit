@@ -1,24 +1,29 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import {
   ArrowRight,
-  Check,
   ChevronDown,
   FileText,
   LoaderCircle,
   Mic,
-  MicOff,
   Play,
   Send,
-  Sparkles,
   Square,
   Video,
   VideoOff,
   Volume2,
   VolumeX,
+  PhoneOff,
+  Clock,
+  ShieldCheck,
+  Users,
+  Maximize2,
 } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useInterviewFeedback } from "./InterviewFeedbackProvider";
 import { STAGES } from "@/lib/types";
-import type { InterviewReport, InterviewView } from "@/lib/interview/contracts";
+import type { InterviewView } from "@/lib/interview/contracts";
 import "./interview-practice.css";
 
 type SavedResume = {
@@ -28,14 +33,17 @@ type SavedResume = {
   isPrimary: boolean;
 };
 type VoiceStatus = "idle" | "loading" | "speaking" | "unavailable";
-const labels: Record<string, string> = {
-  relevance: "Relevance",
-  depth: "Depth & reasoning",
-  evidence: "Evidence & ownership",
-  clarity: "Clarity & structure",
-};
 
 export default function InterviewPractice() {
+  const router = useRouter();
+  const { setResult } = useInterviewFeedback();
+  const [duration, setDuration] = useState(10);
+  const [remaining, setRemaining] = useState(600);
+  const [startedAt, setStartedAt] = useState(0);
+  const [ending, setEnding] = useState(false);
+  const [endReason, setEndReason] = useState<"time" | "manual" | null>(null);
+  const room = useRef<HTMLElement>(null);
+  const endingRef = useRef(false);
   const [resumes, setResumes] = useState<SavedResume[]>([]);
   const [resumeStatus, setResumeStatus] = useState(
     "Loading your saved resumes…",
@@ -52,7 +60,6 @@ export default function InterviewPractice() {
   const [count, setCount] = useState(3);
   const [consent, setConsent] = useState(false);
   const [session, setSession] = useState<InterviewView | null>(null);
-  const [report, setReport] = useState<InterviewReport | null>(null);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -65,12 +72,12 @@ export default function InterviewPractice() {
   const [voice, setVoice] = useState<VoiceStatus>("idle");
   const [replay, setReplay] = useState(0);
   const [clipUrl, setClipUrl] = useState("");
-  const [copyLabel, setCopyLabel] = useState("Copy feedback");
   const video = useRef<HTMLVideoElement>(null);
   const camera = useRef<MediaStream | null>(null);
   const mediaGeneration = useRef(0);
   const microphone = useRef<MediaStream | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
+  const finishRecording = useRef<((blob: Blob | null) => void) | null>(null);
   const recordingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordedBlob = useRef<Blob | null>(null);
   const currentClip = useRef("");
@@ -126,7 +133,8 @@ export default function InterviewPractice() {
   }, [session, cameraOn]);
 
   useEffect(() => {
-    if (!session || !voiceEnabled) return;
+    if (!session || !voiceEnabled || session.questionsComplete || ending)
+      return;
     const controller = new AbortController();
     speechAbort.current = controller;
     let url = "";
@@ -174,7 +182,7 @@ export default function InterviewPractice() {
       audio.pause();
       if (url) URL.revokeObjectURL(url);
     };
-  }, [session, voiceEnabled, replay]);
+  }, [session, voiceEnabled, replay, ending]);
 
   useEffect(() => {
     if (!session) return;
@@ -281,13 +289,19 @@ export default function InterviewPractice() {
       form.set("job", job);
       form.set("stage", stage);
       form.set("count", String(count));
+      form.set("durationMinutes", String(duration));
       if (resumeMode === "saved") form.set("resumeId", resumeId);
       if (resumeMode === "paste") form.set("resumeText", resumeText);
       if (resumeMode === "upload" && file) form.set("resumeFile", file);
       const data = await api("/api/interview/start", form);
       if (mounted.current) {
         setSession(data);
-        setReport(null);
+        setResult(null);
+        setStartedAt(Date.now());
+        setRemaining(duration * 60);
+        setEnding(false);
+        setEndReason(null);
+        endingRef.current = false;
         setVoice("loading");
         setDraft("");
       }
@@ -300,15 +314,16 @@ export default function InterviewPractice() {
       if (mounted.current) setBusy("");
     }
   }
-  async function send(action: "answer" | "skip" | "finish") {
-    if (!session) return;
-    if (
-      action === "finish" &&
-      !window.confirm(
-        "Finish this practice and get feedback now? Your current typed or reviewed answer will be included.",
-      )
-    )
-      return;
+  async function send(
+    action: "answer" | "skip" | "finish",
+    reason: "time" | "manual" = "manual",
+  ) {
+    if (!session || busy || endingRef.current) return;
+    if (action === "finish") {
+      endingRef.current = true;
+      setEnding(true);
+      setEndReason(reason);
+    }
     speechAbort.current?.abort();
     speech.current?.pause();
     setVoice("idle");
@@ -320,24 +335,72 @@ export default function InterviewPractice() {
         : "Preparing the next question",
     );
     try {
+      let finalAnswer = draft;
+      if (action === "finish") {
+        // Flush an active recording before closing the devices so the last answer is included.
+        if (recorder.current?.state === "recording") {
+          const rec = recorder.current;
+          const blob = await new Promise<Blob | null>((resolve) => {
+            const timeout = setTimeout(() => {
+              finishRecording.current = null;
+              resolve(null);
+            }, 5000);
+            finishRecording.current = (value) => {
+              clearTimeout(timeout);
+              finishRecording.current = null;
+              resolve(value);
+            };
+            rec.stop();
+          });
+          stopMedia();
+          if (blob?.size) {
+            const form = new FormData();
+            form.set("token", session.token);
+            const mime = blob.type.split(";")[0];
+            const extension =
+              mime === "audio/mp4"
+                ? "mp4"
+                : mime === "audio/ogg"
+                  ? "ogg"
+                  : "webm";
+            form.set("audio", blob, `answer.${extension}`);
+            const transcript = await api("/api/interview/transcribe", form);
+            finalAnswer = transcript.text;
+            setDraft(finalAnswer);
+          }
+        } else stopMedia();
+      }
       const data = await api("/api/interview/turn", {
         token: session.token,
         action,
-        answer: action === "skip" ? "" : draft,
+        answer: action === "skip" ? "" : finalAnswer,
       });
       if (!mounted.current) return;
       if (data.report) {
-        setReport(data.report);
-        setSession(null);
+        setResult({
+          report: data.report,
+          role,
+          reason:
+            session.endsAt && Date.now() >= session.endsAt
+              ? "time"
+              : action === "finish"
+                ? reason
+                : "completed",
+          elapsed: Math.max(0, Math.floor((Date.now() - startedAt) / 1000)),
+        });
+        setEnding(true);
+        endingRef.current = true;
         stopMedia();
+        router.replace("/app/interview/feedback");
       } else {
         setSession(data);
-        setVoice("loading");
+        setVoice(data.questionsComplete ? "idle" : "loading");
       }
       setDraft("");
       clearClip();
       setSeconds(0);
     } catch (e) {
+      endingRef.current = false;
       if (mounted.current)
         setError(
           e instanceof Error ? e.message : "Could not continue. Please retry.",
@@ -346,6 +409,26 @@ export default function InterviewPractice() {
       if (mounted.current) setBusy("");
     }
   }
+  const expireInterview = useEffectEvent(() => {
+    if (ending || endingRef.current) return;
+    if (busy) {
+      stopMedia();
+      return;
+    }
+    void send("finish", "time");
+  });
+  useEffect(() => {
+    if (!session?.endsAt) return;
+    const deadline = session.endsAt;
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setRemaining(left);
+      if (left === 0) expireInterview();
+    };
+    const timer = setInterval(tick, 500);
+    return () => clearInterval(timer);
+  }, [session?.endsAt]);
+
   async function transcribe(blob: Blob) {
     if (!session) return;
     setBusy("Transcribing your answer");
@@ -394,11 +477,12 @@ export default function InterviewPractice() {
         typeof MediaRecorder === "undefined"
       )
         throw new Error();
+      const generation = mediaGeneration.current;
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true },
         video: false,
       });
-      if (!mounted.current) {
+      if (!mounted.current || generation !== mediaGeneration.current) {
         stream.getTracks().forEach((t) => t.stop());
         return;
       }
@@ -426,15 +510,20 @@ export default function InterviewPractice() {
         stream.getTracks().forEach((t) => t.stop());
         microphone.current = null;
         if (recordingTimer.current) clearInterval(recordingTimer.current);
-        if (!mounted.current) return;
-        setRecording(false);
         const blob = new Blob(chunks, { type: mime });
+        if (finishRecording.current) {
+          finishRecording.current(blob);
+          return;
+        }
+        if (!mounted.current || generation !== mediaGeneration.current) return;
+        setRecording(false);
         recordedBlob.current = blob;
         currentClip.current = URL.createObjectURL(blob);
         setClipUrl(currentClip.current);
         void transcribe(blob);
       };
       rec.onerror = () => {
+        finishRecording.current?.(null);
         stream.getTracks().forEach((t) => t.stop());
         if (recordingTimer.current) clearInterval(recordingTimer.current);
         if (mounted.current) {
@@ -460,27 +549,6 @@ export default function InterviewPractice() {
         );
     } finally {
       if (mounted.current) setBusy("");
-    }
-  }
-  function reset() {
-    stopMedia();
-    setReport(null);
-    setSession(null);
-    setDraft("");
-    setNotice("");
-    setError("");
-    setCopyLabel("Copy feedback");
-  }
-  async function copyFeedback() {
-    if (!report) return;
-    const text = `TopFit interview practice — ${role}\nScore: ${report.score}/100\n${report.completed ? "Completed" : "Partial"} interview: ${report.answeredMain}/${report.plannedMain} main questions answered\n\n${report.summary}\n\nNext steps:\n${report.nextSteps.map((s) => "- " + s).join("\n")}\n\n${report.evaluations.map((e, i) => `Question: ${report.turns[i].question}\nAnswer: ${report.turns[i].answer}\nStrength: ${e.strength}\nImprove: ${e.improve}\nBetter outline:\n${e.betterOutline.map((s) => "- " + s).join("\n")}`).join("\n\n")}`;
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopyLabel("Copied");
-    } catch {
-      setError(
-        "Clipboard unavailable. You can select and copy the feedback on this page.",
-      );
     }
   }
   const validResume =
@@ -525,156 +593,6 @@ export default function InterviewPractice() {
       </button>
     </section>
   );
-
-  if (report)
-    return (
-      <main className="interview-studio">
-        <header className="iv-page-heading">
-          <p className="iv-eyebrow">THE DEBRIEF</p>
-          <h1>
-            A stronger answer <em>starts here.</em>
-          </h1>
-          <p>
-            Your performance, the evidence behind it, and a concrete plan for
-            next time.
-          </p>
-        </header>
-        <div className="iv-report-top">
-          <div className="iv-score">
-            <span>COACHING SCORE</span>
-            <strong>
-              {report.score}
-              <small>/100</small>
-            </strong>
-            <p>
-              {report.completed ? "Interview completed" : "Partial interview"}
-            </p>
-            <small>
-              {report.answeredMain} / {report.plannedMain} main questions
-              answered
-            </small>
-          </div>
-          <section className="iv-report-summary">
-            <h2>{role}</h2>
-            <p>{report.summary}</p>
-            <div className="iv-dimensions">
-              {report.dimensions.map((d) => (
-                <div key={d.name}>
-                  <label htmlFor={`score-${d.name}`}>
-                    {labels[d.name]}
-                    <span>{d.score}/100</span>
-                  </label>
-                  <progress id={`score-${d.name}`} value={d.score} max={100} />
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-        <p className="iv-rubric">
-          Each submitted answer is rated 0–5 on relevance, depth, evidence and
-          clarity, with equal weight. The overall score averages these ratings
-          across all submitted main and follow-up answers; skipped answers
-          receive zero. Feedback uses the submitted transcript, not appearance,
-          voice or accent. This is AI coaching, not a hiring prediction.
-        </p>
-        <div className="iv-feedback-grid">
-          <section>
-            <h2>
-              <Check size={18} /> Keep doing this
-            </h2>
-            <ul>
-              {report.strengths.map((s, i) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ul>
-          </section>
-          <section>
-            <h2>
-              <Sparkles size={18} /> Your next practice plan
-            </h2>
-            <ol>
-              {report.nextSteps.map((s, i) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ol>
-          </section>
-        </div>
-        <section className="iv-answer-feedback">
-          <div className="iv-section-heading">
-            <h2>Question-by-question feedback</h2>
-            <span>{report.turns.length} submitted answers</span>
-          </div>
-          {report.evaluations.map((evaluation, i) => (
-            <details key={i} open={i === 0}>
-              <summary>
-                <span>{String(i + 1).padStart(2, "0")}</span>
-                <div>
-                  {report.turns[i].question}
-                  <small>
-                    {report.turns[i].followup ? "Follow-up" : "Main question"}
-                  </small>
-                </div>
-                <strong>
-                  {Math.round(
-                    ((evaluation.relevance +
-                      evaluation.depth +
-                      evaluation.evidence +
-                      evaluation.clarity) /
-                      20) *
-                      100,
-                  )}
-                  <small>/100</small>
-                </strong>
-                <ChevronDown size={16} />
-              </summary>
-              <div className="iv-evaluation-body">
-                <p className="iv-label">YOUR ANSWER</p>
-                <p className="iv-original-answer">{report.turns[i].answer}</p>
-                {evaluation.evidenceQuote && (
-                  <blockquote>“{evaluation.evidenceQuote}”</blockquote>
-                )}
-                <div className="iv-turn-scores">
-                  {(["relevance", "depth", "evidence", "clarity"] as const).map(
-                    (k) => (
-                      <span key={k}>
-                        {labels[k]} <b>{evaluation[k]}/5</b>
-                      </span>
-                    ),
-                  )}
-                </div>
-                <h3>What worked</h3>
-                <p>{evaluation.strength}</p>
-                <h3>What to improve</h3>
-                <p>{evaluation.improve}</p>
-                <h3>A stronger answer outline</h3>
-                <ol>
-                  {evaluation.betterOutline.map((s, j) => (
-                    <li key={j}>{s}</li>
-                  ))}
-                </ol>
-              </div>
-            </details>
-          ))}
-        </section>
-        <div className="iv-report-actions">
-          <button className="iv-primary-button" onClick={reset}>
-            Practice again <ArrowRight size={16} />
-          </button>
-          <button className="iv-secondary-button" onClick={copyFeedback}>
-            {copyLabel}
-          </button>
-        </div>
-        {error && (
-          <p role="alert" className="iv-error">
-            {error}
-          </p>
-        )}
-        <p className="iv-footnote">
-          Keep this tab open or copy your feedback. Interview transcripts and
-          feedback are not saved to your account.
-        </p>
-      </main>
-    );
 
   if (!session)
     return (
@@ -722,16 +640,34 @@ export default function InterviewPractice() {
                 </select>
               </label>
               <label>
-                Round length
+                Questions
                 <select
                   value={count}
                   onChange={(e) => setCount(Number(e.target.value))}
                 >
-                  <option value={3}>3 main questions · ~10 min</option>
-                  <option value={5}>5 main questions · ~15–20 min</option>
+                  <option value={3}>3 main questions</option>
+                  <option value={5}>5 main questions</option>
                 </select>
               </label>
             </div>
+            <label className="iv-duration-label">
+              Interview duration
+              <select
+                aria-label="Interview duration"
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+              >
+                {[5, 10, 20, 30].map((n) => (
+                  <option key={n} value={n}>
+                    {n} minutes
+                  </option>
+                ))}
+              </select>
+              <small>
+                The interview ends when the timer reaches zero, or when you end
+                the call.
+              </small>
+            </label>
             <div className="iv-resume-heading">
               <label className="iv-label">Your resume</label>
               <div role="group" aria-label="Resume source">
@@ -901,8 +837,8 @@ export default function InterviewPractice() {
             </div>
             <p className="iv-footnote">
               Camera is optional. Answer with your microphone or keyboard. Audio
-              answers are capped at 90 seconds. This session lasts up to one
-              hour and stays in this tab.
+              answers are capped at 90 seconds. Your timed session stays in this
+              tab. Feedback opens on a separate page after the call ends.
             </p>
           </aside>
         </div>
@@ -910,110 +846,208 @@ export default function InterviewPractice() {
     );
 
   return (
-    <main className="interview-studio">
-      <header className="iv-room-heading">
+    <main ref={room} className="interview-studio iv-conference">
+      <header className="iv-call-header">
         <div>
-          <p className="iv-eyebrow">
-            <span /> PRACTICE IN PROGRESS
-          </p>
+          <span className="iv-call-brand">
+            TOPFIT <span>MEET</span>
+          </span>
           <h1>{role}</h1>
+          <p>
+            <ShieldCheck size={12} /> Private AI practice · {session.mainTotal}{" "}
+            questions
+          </p>
         </div>
-        <div className="iv-round-progress">
-          <span>{session.isFollowup ? "FOLLOW-UP" : "MAIN QUESTION"}</span>
+        <div
+          className={`iv-call-clock ${remaining <= 60 ? "iv-clock-warning" : ""}`}
+          role="timer"
+          aria-label="Time remaining"
+        >
+          <Clock size={16} />
           <strong>
-            {session.mainNumber}
-            <small> / {session.mainTotal}</small>
+            {String(Math.floor(remaining / 60)).padStart(2, "0")}:
+            {String(remaining % 60).padStart(2, "0")}
           </strong>
+          <span>remaining</span>
         </div>
       </header>
-      <div className="iv-room-grid">
-        <section
-          className={`iv-interviewer-stage ${voice === "speaking" ? "iv-speaking" : ""}`}
-          aria-label="AI interviewer"
-        >
-          <div className="iv-stage-top">
-            <span>
-              <i /> Morgan · AI interviewer
-            </span>
-            <button
-              aria-label={
-                voiceEnabled ? "Mute interviewer" : "Unmute interviewer"
-              }
-              onClick={() => {
-                setVoiceEnabled(!voiceEnabled);
-                setVoice("idle");
-              }}
+      <div className="iv-meeting-body">
+        <div className="iv-meeting-stage">
+          <div className="iv-participant-grid">
+            <section
+              className={`iv-host-tile ${voice === "speaking" ? "iv-host-speaking" : ""}`}
+              aria-label="AI interviewer"
             >
-              {voiceEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
-            </button>
+              <div className="iv-tile-top">
+                <span className="iv-live-pill">
+                  <i /> {voice === "speaking" ? "Speaking" : "Connected"}
+                </span>
+                <button
+                  aria-label="Toggle fullscreen"
+                  onClick={() => {
+                    if (document.fullscreenElement)
+                      void document.exitFullscreen();
+                    else void room.current?.requestFullscreen?.();
+                  }}
+                >
+                  <Maximize2 size={15} />
+                </button>
+              </div>
+              <div className="iv-host-backdrop" />
+              <InterviewerPortrait speaking={voice === "speaking"} />
+              <div className="iv-host-identity">
+                <span className="iv-host-name">
+                  Morgan <span>AI INTERVIEWER</span>
+                </span>
+                <p>
+                  {!voiceEnabled
+                    ? "Voice muted"
+                    : voice === "speaking"
+                      ? "Asking your next question…"
+                      : session.questionsComplete
+                        ? "Round complete"
+                        : voice === "loading"
+                          ? "Preparing question audio…"
+                          : voice === "unavailable"
+                            ? "Voice unavailable · read the question below"
+                            : "Listening to your story"}
+                </p>
+              </div>
+              <div className="iv-sound-bars" aria-hidden="true">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <i key={i} style={{ animationDelay: `${i * 0.13}s` }} />
+                ))}
+              </div>
+            </section>
+            <div className="iv-self-tile">
+              {cameraPanel}
+              <span className="iv-you-status">
+                {recording ? "Your microphone is recording" : "Microphone off"}
+              </span>
+            </div>
           </div>
-          <InterviewerPortrait speaking={voice === "speaking"} />
-          <div className="iv-wave" aria-hidden="true">
-            {Array.from({ length: 11 }, (_, i) => (
-              <span key={i} style={{ animationDelay: `${i * 0.08}s` }} />
-            ))}
-          </div>
-          <p className="iv-voice-status">
-            {!voiceEnabled
-              ? "Interviewer voice muted"
-              : voice === "speaking"
-                ? "Speaking…"
-                : voice === "loading"
-                  ? "Preparing the interviewer’s voice…"
-                  : voice === "unavailable"
-                    ? "Voice unavailable. Read the question to continue."
-                    : "Your turn. Take a breath, then answer."}
-          </p>
-          <div className="iv-question-card">
-            <p>
-              {session.isFollowup ? "LET’S GO DEEPER" : "YOUR NEXT QUESTION"}
-            </p>
-            <h2>{session.question.question}</h2>
+          <section className="iv-live-question">
             <div>
-              <span>{session.question.focus}</span>
+              <span>
+                {session.questionsComplete
+                  ? "ROUND WRAPPED"
+                  : session.isFollowup
+                    ? "FOLLOW-UP QUESTION"
+                    : `QUESTION ${session.mainNumber} OF ${session.mainTotal}`}
+              </span>
               <button
+                disabled={
+                  recording || !!busy || ending || session.questionsComplete
+                }
                 onClick={() => {
                   setVoiceEnabled(true);
                   setVoice("loading");
                   setReplay((n) => n + 1);
                 }}
-                disabled={recording || !!busy || voice === "loading"}
               >
-                <Play size={13} /> Play question
+                <Play size={13} /> Replay
               </button>
             </div>
-          </div>
-        </section>
-        <aside className="iv-room-aside">
-          {cameraPanel}
-          <section className="iv-conversation">
             <h2>
-              Conversation so far <span>{session.turns.length} answers</span>
+              {session.questionsComplete
+                ? "That’s all my questions. Thank you for sharing your experience."
+                : session.question.question}
             </h2>
-            {session.turns.length === 0 ? (
-              <p>
-                Your submitted answers will appear here. The next question will
-                respond to what you share.
-              </p>
-            ) : (
-              session.turns.map((turn, i) => (
+            <p>
+              {session.questionsComplete
+                ? "End the call whenever you’re ready to see your feedback, or stay until the timer ends."
+                : "Take your time. Your next question will build on what you share."}
+            </p>
+          </section>
+          <div className="iv-call-toolbar">
+            <div>
+              <button
+                className={recording ? "iv-control-active" : ""}
+                disabled={!!busy || ending || session.questionsComplete}
+                onClick={() =>
+                  recording
+                    ? recorder.current?.state === "recording" &&
+                      recorder.current.stop()
+                    : void startRecording()
+                }
+              >
+                {recording ? <Square size={19} /> : <Mic size={19} />}
+                <span>{recording ? "Stop recording" : "Microphone"}</span>
+              </button>
+              <button
+                disabled={cameraBusy || !!busy || ending}
+                onClick={toggleCamera}
+              >
+                {cameraOn ? <Video size={19} /> : <VideoOff size={19} />}
+                <span>Camera</span>
+              </button>
+              <button
+                disabled={ending}
+                onClick={() => {
+                  setVoiceEnabled(!voiceEnabled);
+                  setVoice("idle");
+                }}
+              >
+                {voiceEnabled ? <Volume2 size={19} /> : <VolumeX size={19} />}
+                <span>Speaker</span>
+              </button>
+            </div>
+            <button
+              className="iv-end-call"
+              disabled={!!busy || ending}
+              onClick={() => void send("finish")}
+            >
+              <PhoneOff size={19} />
+              <span>End interview</span>
+            </button>
+          </div>
+          <p className="iv-call-privacy">
+            <ShieldCheck size={12} /> Video stays on your device. Morgan is a
+            voiced AI with a profile photo, not a live person.
+          </p>
+        </div>
+        <aside className="iv-meeting-notes">
+          <h2>
+            <Users size={15} /> In this room <span>2</span>
+          </h2>
+          <div className="iv-roster">
+            <span>M</span>
+            <div>
+              Morgan<small>AI interviewer · Host</small>
+            </div>
+            <i />
+          </div>
+          <div className="iv-roster">
+            <span>Y</span>
+            <div>
+              You<small>Interview candidate</small>
+            </div>
+            <i />
+          </div>
+          <h3>Conversation</h3>
+          <p className="iv-notes-help">
+            Your transcript stays here during the call. Scores and feedback are
+            revealed after you leave the room.
+          </p>
+          <div className="iv-call-transcript">
+            {session.turns.length ? (
+              session.turns.map((t, i) => (
                 <details key={i}>
                   <summary>
-                    {turn.followup ? "Follow-up" : "Question"}{" "}
-                    {turn.mainIndex + 1}
+                    {t.followup ? "Follow-up" : `Question ${t.mainIndex + 1}`}
                     <ChevronDown size={13} />
                   </summary>
-                  <strong>{turn.question}</strong>
-                  <p>{turn.answer}</p>
+                  <strong>{t.question}</strong>
+                  <p>{t.answer}</p>
                 </details>
               ))
+            ) : (
+              <div className="iv-transcript-empty">
+                <Mic size={23} />
+                <p>Your conversation starts with your first answer.</p>
+              </div>
             )}
-          </section>
-          <p className="iv-footnote">
-            A private rehearsal. Video stays local; only submitted text and
-            recorded audio answers are sent for AI processing. Camera and
-            microphone turn off when the interview ends.
-          </p>
+          </div>
         </aside>
       </div>
       <section
@@ -1043,7 +1077,13 @@ export default function InterviewPractice() {
           rows={5}
           maxLength={5000}
           value={draft}
-          disabled={recording || !!busy}
+          disabled={
+            recording ||
+            !!busy ||
+            ending ||
+            !!session.questionsComplete ||
+            remaining === 0
+          }
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Start recording, or type your answer here. Describe what you did, why you chose that approach, and what happened."
         />
@@ -1058,7 +1098,13 @@ export default function InterviewPractice() {
               onClick={() =>
                 recordedBlob.current && transcribe(recordedBlob.current)
               }
-              disabled={!!busy || recording}
+              disabled={
+                !!busy ||
+                recording ||
+                ending ||
+                !!session.questionsComplete ||
+                remaining === 0
+              }
             >
               Retry transcription
             </button>
@@ -1096,7 +1142,12 @@ export default function InterviewPractice() {
               <button
                 className="iv-record-button"
                 onClick={startRecording}
-                disabled={!!busy}
+                disabled={
+                  !!busy ||
+                  ending ||
+                  !!session.questionsComplete ||
+                  remaining === 0
+                }
               >
                 <Mic size={16} /> Record answer
               </button>
@@ -1104,7 +1155,13 @@ export default function InterviewPractice() {
             <button
               className="iv-text-button"
               onClick={() => send("skip")}
-              disabled={!!busy || recording}
+              disabled={
+                !!busy ||
+                recording ||
+                ending ||
+                !!session.questionsComplete ||
+                remaining === 0
+              }
             >
               Skip question
             </button>
@@ -1112,119 +1169,71 @@ export default function InterviewPractice() {
           <button
             className="iv-primary-button"
             onClick={() => send("answer")}
-            disabled={!!busy || recording || draft.trim().length < 2}
+            disabled={
+              !!busy ||
+              recording ||
+              ending ||
+              !!session.questionsComplete ||
+              remaining === 0 ||
+              draft.trim().length < 2
+            }
           >
             <Send size={15} /> Send answer
           </button>
         </div>
       </section>
-      <div className="iv-room-footer">
-        <span>
-          <MicOff size={13} /> Microphone records only when you choose Record
-          answer
-        </span>
-        <button
-          disabled={!!busy || recording}
-          onClick={() => {
-            if (
-              window.confirm(
-                "Leave this practice without feedback? Your interview transcript will be lost.",
-              )
-            )
-              reset();
-          }}
-        >
-          Leave room
-        </button>
-        <button
-          onClick={() => send("finish")}
-          disabled={
-            !!busy ||
-            recording ||
-            (!session.turns.length && draft.trim().length < 2)
-          }
-        >
-          Finish & get feedback <ArrowRight size={14} />
-        </button>
-      </div>
+      {ending && (
+        <div className="iv-ending-overlay" role="status">
+          <div>
+            <LoaderCircle className="animate-spin" size={32} />
+            <h2>
+              {endReason === "time" ? "Your time is up." : "Interview ended."}
+            </h2>
+            <p>Putting together your scoreboard and feedback…</p>
+            {error && (
+              <>
+                <p role="alert">{error}</p>
+                <button
+                  className="iv-primary-button"
+                  disabled={!!busy}
+                  onClick={() => void send("finish", endReason || "manual")}
+                >
+                  Retry feedback
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
 
 function InterviewerPortrait({ speaking }: { speaking: boolean }) {
+  const [failed, setFailed] = useState(false);
   return (
     <div
-      className={`iv-portrait ${speaking ? "is-speaking" : ""}`}
-      role="img"
-      aria-label="Morgan, illustrated AI interviewer"
+      className={`iv-portrait iv-photo-portrait ${speaking ? "is-speaking" : ""}`}
     >
-      <svg viewBox="0 0 180 180" fill="none" aria-hidden="true">
-        <circle cx="90" cy="90" r="88" fill="#305849" />
-        <circle
-          cx="90"
-          cy="90"
-          r="69"
-          stroke="#72947c"
-          strokeOpacity=".35"
-          strokeDasharray="2 9"
+      {failed ? (
+        <span
+          className="iv-portrait-fallback"
+          role="img"
+          aria-label="Morgan, AI interviewer"
+        >
+          M
+        </span>
+      ) : (
+        <Image
+          src="https://randomuser.me/api/portraits/women/44.jpg"
+          alt="Morgan’s AI interviewer profile"
+          width={256}
+          height={256}
+          unoptimized
+          onError={() => setFailed(true)}
         />
-        <path
-          d="M32 170C33 131 52 119 90 119C128 119 147 131 148 170"
-          fill="#d6dfc5"
-        />
-        <path d="M64 121L90 157L116 121" fill="#f3efde" />
-        <path d="M81 139L90 133L99 139L95 169H85L81 139Z" fill="#bf8c65" />
-        <path d="M74 102H106V126C97 138 83 138 74 126V102Z" fill="#c99877" />
-        <path
-          d="M54 68C54 41 71 31 92 31C119 31 128 51 126 73L120 98C114 115 102 122 90 122C75 122 62 113 58 96L54 68Z"
-          fill="#dfb38f"
-        />
-        <path
-          d="M53 76C42 44 63 25 91 25C119 25 134 47 126 78L117 59C99 66 80 60 68 52L62 80L53 76Z"
-          fill="#243c32"
-        />
-        <path
-          d="M73 82H79M103 82H109"
-          stroke="#354b3b"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <path
-          d="M90 83L86 96H94"
-          stroke="#bf8b6c"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <path
-          className="iv-mouth"
-          d="M80 106Q90 113 100 106"
-          stroke="#8a604d"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
-        <rect
-          x="64"
-          y="74"
-          width="22"
-          height="17"
-          rx="6"
-          stroke="#526151"
-          strokeWidth="2"
-        />
-        <rect
-          x="96"
-          y="74"
-          width="22"
-          height="17"
-          rx="6"
-          stroke="#526151"
-          strokeWidth="2"
-        />
-        <path d="M86 79H96" stroke="#526151" strokeWidth="2" />
-      </svg>
-      <span className="iv-ai-badge">
-        <Sparkles size={10} /> AI
-      </span>
+      )}
+      <span className="iv-ai-badge">AI</span>
     </div>
   );
 }
