@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const QuestionSchema = z.object({
   question: z.string().min(8).max(600),
-  focus: z.string().min(2).max(120),
+  focus: z.string().min(2).max(200),
 });
 export const PlanSchema = z.object({
   questions: z.array(QuestionSchema).min(3).max(5),

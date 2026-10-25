@@ -41,7 +41,10 @@ export async function POST(req: NextRequest) {
             isFollowup: true,
             current: {
               question: follow.question,
-              focus: follow.reason || session.current.focus,
+              focus:
+                follow.reason.trim().length >= 2
+                  ? follow.reason.trim().slice(0, 200)
+                  : session.current.focus,
             },
           }),
           { headers: { "Cache-Control": "no-store" } },

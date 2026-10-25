@@ -33,6 +33,7 @@ process.env.INTERVIEW_SESSION_SECRET = "synthetic-signing-key-for-tests-only";
 let user = { id: "user-a" };
 let unavailable = false;
 let captured = [];
+let followReason = "Clarify the measurement context and tradeoffs. ".repeat(4);
 let ownerFilter;
 const resume =
   "Alex Example, software engineer. Built Python and SQL pipelines, monitored production failures, wrote tests and deployed services. Led a migration from batch processing to incremental ingestion. Improved reliability through validation and documented rollback procedures.";
@@ -64,7 +65,7 @@ class MockOpenAI {
             parsed = {
               needed: input.answer.includes("latency"),
               question: "How did you measure that latency change?",
-              reason: "Clarify the metric you mentioned",
+              reason: followReason,
             };
           } else {
             parsed = {
@@ -262,9 +263,30 @@ function startForm() {
   check(follow.body.isFollowup, true);
   check(follow.body.mainNumber, 1);
   check(
+    readSession(follow.body.token, user.id).current.focus.length > 120,
+    true,
+    "Long follow-up context remains valid in a signed session",
+  );
+  check(
+    (await post("speech", { token: follow.body.token })).status,
+    200,
+    "Follow-up speech uses the same valid question contract",
+  );
+  check(
     captured.at(-1).messages[1].content.includes("I improved latency"),
     true,
     "Follow-ups receive the actual user answer",
+  );
+  followReason = "x";
+  const shortFollow = await post("turn", {
+    token,
+    action: "answer",
+    answer: "I improved latency.",
+  });
+  check(
+    readSession(shortFollow.body.token, user.id).current.focus,
+    session.current.focus,
+    "A too-short follow-up reason uses the valid main focus",
   );
   const second = await post("turn", {
     token: follow.body.token,

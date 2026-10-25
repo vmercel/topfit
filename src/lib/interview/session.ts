@@ -61,6 +61,8 @@ export function newSession(
   };
 }
 export function viewSession(session: InterviewSession): InterviewView {
+  // Never issue a signed state that the next request cannot read.
+  SessionSchema.parse(session);
   return {
     token: signSession(session),
     question: session.current,
