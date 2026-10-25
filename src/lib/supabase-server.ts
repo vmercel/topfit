@@ -1,9 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 
 // User-scoped client: reads the session from cookies. Used for identity
 // (auth.getUser) in route handlers and server components.
 export async function supabaseServer() {
+  // Auth checks read the clock internally. They must run on an actual request,
+  // not while Cache Components speculatively prerenders a signed-in session.
+  await connection();
   const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
