@@ -296,6 +296,7 @@ export default function InterviewPractice() {
       const data = await api("/api/interview/start", form);
       if (mounted.current) {
         setSession(data);
+        window.scrollTo({ top: 0, behavior: "instant" });
         setResult(null);
         setStartedAt(Date.now());
         setRemaining(duration * 60);
@@ -1074,7 +1075,7 @@ export default function InterviewPractice() {
         </div>
         <textarea
           aria-label="Your answer"
-          rows={5}
+          rows={3}
           maxLength={5000}
           value={draft}
           disabled={

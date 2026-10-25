@@ -1324,6 +1324,7 @@
   line-height: 1.6;
 }
 .iv-photo-portrait {
+  border-radius: 50%;
   position: relative;
   overflow: visible;
 }
@@ -1566,6 +1567,7 @@
   flex-direction: column;
 }
 .iv-self-tile .iv-camera {
+  margin-top: 0;
   background: transparent;
   border: 0;
   padding: 0;
