@@ -24,6 +24,8 @@ export const SessionSchema = z.object({
   userId: z.string(),
   id: z.string(),
   expires: z.number(),
+  endsAt: z.number().optional(),
+  questionsComplete: z.boolean().optional(),
   resume: z.string().max(26000),
   role: z.string().max(500),
   job: z.string().max(14000),
@@ -65,6 +67,8 @@ export type InterviewReport = Feedback & {
   plannedMain: number;
 };
 export type InterviewView = {
+  endsAt?: number;
+  questionsComplete?: boolean;
   token: string;
   question: InterviewQuestion;
   mainNumber: number;

@@ -5,7 +5,7 @@ import {
   sessionBody,
 } from "@/lib/interview/http";
 import { chooseFollowup, evaluateInterview } from "@/lib/interview/ai";
-import { recordAnswer, nextMain } from "@/lib/interview/engine";
+import { recordAnswer, nextMain, emptyReport } from "@/lib/interview/engine";
 import { viewSession } from "@/lib/interview/session";
 export const maxDuration = 120;
 export async function POST(req: NextRequest) {
@@ -21,14 +21,27 @@ export async function POST(req: NextRequest) {
     if (body.action === "skip") answer = "[Skipped]";
     if (body.action === "answer" && answer.length < 2)
       throw new Error("Answer the question before continuing.");
-    const updated = answer ? recordAnswer(session, answer) : session;
-    if (body.action === "finish") {
-      if (!updated.turns.length)
-        throw new Error(
-          "Submit at least one answer before requesting feedback.",
-        );
+    const timedOut = !!session.endsAt && Date.now() >= session.endsAt;
+    const finishing = body.action === "finish" || timedOut;
+    if (session.questionsComplete && !finishing)
+      throw new Error(
+        "All questions are complete. End the interview to see feedback.",
+      );
+    const updated =
+      answer && !session.questionsComplete
+        ? recordAnswer(session, answer)
+        : session;
+    if (finishing) {
       return NextResponse.json(
-        { report: await evaluateInterview(updated, false, req.signal) },
+        {
+          report: updated.turns.length
+            ? await evaluateInterview(
+                updated,
+                !!session.questionsComplete,
+                req.signal,
+              )
+            : emptyReport(session),
+        },
         { headers: { "Cache-Control": "no-store" } },
       );
     }
@@ -55,7 +68,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       next
         ? viewSession(next)
-        : { report: await evaluateInterview(updated, true, req.signal) },
+        : viewSession({ ...updated, questionsComplete: true }),
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {

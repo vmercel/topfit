@@ -48,7 +48,7 @@ export function interviewError(error: unknown) {
   // Do not return provider responses, prompts, stack traces or credentials.
   const message = error instanceof Error ? error.message : "";
   const expected =
-    /^(Invalid interview|This interview|Interview turn|The feedback|Could not|Missing interview|The interview request|Answer |Submit |Unsupported audio|Audio |Resume |Choose |Paste )/.test(
+    /^(Invalid interview|All questions|This interview|Interview turn|The feedback|Could not|Missing interview|The interview request|Answer |Submit |Unsupported audio|Audio |Resume |Choose |Paste )/.test(
       message,
     );
   return NextResponse.json(

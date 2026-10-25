@@ -65,6 +65,8 @@ export function viewSession(session: InterviewSession): InterviewView {
   SessionSchema.parse(session);
   return {
     token: signSession(session),
+    endsAt: session.endsAt,
+    questionsComplete: session.questionsComplete,
     question: session.current,
     mainNumber: session.mainIndex + 1,
     mainTotal: session.plan.length,

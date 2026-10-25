@@ -253,7 +253,28 @@ function startForm() {
       .status,
     400,
   );
-  check((await post("turn", { token, action: "finish" })).status, 400);
+  const empty = await post("turn", { token, action: "finish" });
+  check(empty.status, 200);
+  check(empty.body.report.turns.length, 0);
+  check(empty.body.report.score, 0);
+  check(Number.isFinite(empty.body.report.score), true);
+  check(
+    start.body.endsAt > Date.now(),
+    true,
+    "A server-signed timer is returned",
+  );
+  const badDuration = startForm();
+  badDuration.set("durationMinutes", "999");
+  check((await post("start", badDuration)).status, 400);
+  const timed = await post("turn", {
+    token: signSession({ ...session, endsAt: Date.now() - 1 }),
+    action: "finish",
+  });
+  check(
+    timed.body.report.turns.length,
+    0,
+    "An unanswered timed interview can end safely",
+  );
   const follow = await post("turn", {
     token,
     action: "answer",
@@ -300,10 +321,31 @@ function startForm() {
     action: "skip",
   });
   check(third.body.mainNumber, 3);
-  const final = await post("turn", {
+  const wrapped = await post("turn", {
     token: third.body.token,
     action: "answer",
     answer: "I documented validation failures and rehearsed rollback.",
+  });
+  check(wrapped.status, 200);
+  check(wrapped.body.questionsComplete, true);
+  check(
+    wrapped.body.report,
+    undefined,
+    "No grades are exposed while the room is open",
+  );
+  check(
+    (
+      await post("turn", {
+        token: wrapped.body.token,
+        action: "answer",
+        answer: "Duplicate",
+      })
+    ).status,
+    400,
+  );
+  const final = await post("turn", {
+    token: wrapped.body.token,
+    action: "finish",
   });
   check(final.status, 200);
   check(final.body.report.completed, true);
