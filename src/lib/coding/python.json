@@ -1,0 +1,4086 @@
+[
+  {
+    "id": "two-sum",
+    "title": "Two Sum",
+    "track": "python",
+    "pattern": "Hash maps",
+    "difficulty": "Easy",
+    "args": "nums, target",
+    "prompt": "Return the indices of two distinct numbers adding to target. Return [] if none exist. Exactly one pair exists when a pair is present.",
+    "idea": "Trade a little memory for a single pass: remember where each earlier value appeared.",
+    "steps": [
+      "For [2,7,11,15], target 9: read 2; need 7; store 2 → 0.",
+      "Read 7; need 2; the map has 2 → 0.",
+      "Return [0,1]. Check the complement before inserting to avoid using an element twice."
+    ],
+    "complexity": "O(n) time · O(n) space",
+    "solution": "def solve(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        if target - n in seen:\n            return [seen[target - n], i]\n        seen[n] = i\n    return []",
+    "tests": [
+      {
+        "input": [
+          [
+            2,
+            7,
+            11,
+            15
+          ],
+          9
+        ],
+        "expected": [
+          0,
+          1
+        ]
+      },
+      {
+        "input": [
+          [
+            3,
+            3
+          ],
+          6
+        ],
+        "expected": [
+          0,
+          1
+        ]
+      },
+      {
+        "input": [
+          [
+            1,
+            2
+          ],
+          8
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "best-time-to-buy-and-sell-stock",
+    "title": "Best Time to Buy and Sell Stock",
+    "track": "python",
+    "pattern": "Arrays",
+    "difficulty": "Easy",
+    "args": "prices",
+    "prompt": "Return the largest profit from one buy followed by one sell. You may make no trade.",
+    "idea": "The cheapest price before today is the only buy price worth remembering.",
+    "steps": [
+      "Read 7: cheapest is 7, profit is 0.",
+      "Read 1 then 5: cheapest becomes 1; profit becomes 4.",
+      "Read 6: profit becomes 5; no later price improves it."
+    ],
+    "complexity": "O(n) time · O(1) space",
+    "solution": "def solve(prices):\n    low, best = float('inf'), 0\n    for price in prices:\n        low = min(low, price)\n        best = max(best, price - low)\n    return best",
+    "tests": [
+      {
+        "input": [
+          [
+            7,
+            1,
+            5,
+            3,
+            6,
+            4
+          ]
+        ],
+        "expected": 5
+      },
+      {
+        "input": [
+          [
+            7,
+            6,
+            4
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "contains-duplicate",
+    "title": "Contains Duplicate",
+    "track": "python",
+    "pattern": "Hash maps",
+    "difficulty": "Easy",
+    "args": "nums",
+    "prompt": "Return whether any value appears at least twice.",
+    "idea": "A set contains one copy of each value.",
+    "steps": [
+      "[1,2,3,1] contains 4 items.",
+      "Its set {1,2,3} contains 3.",
+      "Different sizes prove that something was repeated."
+    ],
+    "complexity": "O(n) expected time · O(n) space",
+    "solution": "def solve(nums):\n    return len(set(nums)) != len(nums)",
+    "tests": [
+      {
+        "input": [
+          [
+            1,
+            2,
+            3,
+            1
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": false
+      }
+    ]
+  },
+  {
+    "id": "product-of-array-except-self",
+    "title": "Product of Array Except Self",
+    "track": "python",
+    "pattern": "Arrays",
+    "difficulty": "Medium",
+    "args": "nums",
+    "prompt": "Return products of every number except the current one, without division.",
+    "idea": "Multiply what is on the left, then what is on the right. Zero values need no special case.",
+    "steps": [
+      "For [1,2,3,4], left products are [1,1,2,6].",
+      "Walk backward with right products 1,4,12,24.",
+      "Multiply at each position to obtain [24,12,8,6]."
+    ],
+    "complexity": "O(n) time · O(1) extra space excluding output",
+    "solution": "def solve(nums):\n    result = [1] * len(nums)\n    product = 1\n    for i, value in enumerate(nums):\n        result[i] = product\n        product *= value\n    product = 1\n    for i in range(len(nums)-1, -1, -1):\n        result[i] *= product\n        product *= nums[i]\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            1,
+            2,
+            3,
+            4
+          ]
+        ],
+        "expected": [
+          24,
+          12,
+          8,
+          6
+        ]
+      },
+      {
+        "input": [
+          [
+            0,
+            2,
+            0
+          ]
+        ],
+        "expected": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "input": [
+          [
+            0,
+            2,
+            3
+          ]
+        ],
+        "expected": [
+          6,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maximum-subarray",
+    "title": "Maximum Subarray",
+    "track": "python",
+    "pattern": "Dynamic programming",
+    "difficulty": "Medium",
+    "args": "nums",
+    "prompt": "Return the maximum sum of a nonempty contiguous subarray. nums is nonempty.",
+    "idea": "A negative running sum only makes the next number worse, so start over.",
+    "steps": [
+      "For [-2,1,-3,4,-1,2,1], restart at 1 and later at 4.",
+      "Extend 4 with -1,2,1 to reach 6.",
+      "Keep the best sum even if the running sum later falls."
+    ],
+    "complexity": "O(n) time · O(1) space",
+    "solution": "def solve(nums):\n    current = best = nums[0]\n    for n in nums[1:]:\n        current = max(n, current+n)\n        best = max(best, current)\n    return best",
+    "tests": [
+      {
+        "input": [
+          [
+            -2,
+            1,
+            -3,
+            4,
+            -1,
+            2,
+            1,
+            -5,
+            4
+          ]
+        ],
+        "expected": 6
+      },
+      {
+        "input": [
+          [
+            -3,
+            -1,
+            -2
+          ]
+        ],
+        "expected": -1
+      },
+      {
+        "input": [
+          [
+            5
+          ]
+        ],
+        "expected": 5
+      }
+    ]
+  },
+  {
+    "id": "maximum-product-subarray",
+    "title": "Maximum Product Subarray",
+    "track": "python",
+    "pattern": "Dynamic programming",
+    "difficulty": "Medium",
+    "args": "nums",
+    "prompt": "Return the maximum product of a nonempty contiguous subarray. nums is nonempty.",
+    "idea": "A negative number can turn the smallest product into the largest: track both.",
+    "steps": [
+      "For [2,3,-2,4], the best product reaches 6.",
+      "At -2, swap the roles of smallest and largest.",
+      "Include the number itself as a restart candidate; this also handles zero."
+    ],
+    "complexity": "O(n) time · O(1) space",
+    "solution": "def solve(nums):\n    lo = hi = best = nums[0]\n    for n in nums[1:]:\n        lo, hi = min(n, lo*n, hi*n), max(n, lo*n, hi*n)\n        best = max(best, hi)\n    return best",
+    "tests": [
+      {
+        "input": [
+          [
+            2,
+            3,
+            -2,
+            4
+          ]
+        ],
+        "expected": 6
+      },
+      {
+        "input": [
+          [
+            -2,
+            0,
+            -1
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "input": [
+          [
+            -2,
+            3,
+            -4
+          ]
+        ],
+        "expected": 24
+      }
+    ]
+  },
+  {
+    "id": "find-minimum-in-rotated-sorted-array",
+    "title": "Find Minimum in Rotated Sorted Array",
+    "track": "python",
+    "pattern": "Binary search",
+    "difficulty": "Medium",
+    "args": "nums",
+    "prompt": "Return the minimum in a nonempty rotated ascending array of distinct values.",
+    "idea": "Compare the middle with the right edge to identify which half contains the rotation.",
+    "steps": [
+      "[4,5,6,7,0,1,2]: middle 7 exceeds right 2.",
+      "The minimum must be to the right of 7.",
+      "Narrow until the two search boundaries meet at 0."
+    ],
+    "complexity": "O(log n) time · O(1) space",
+    "solution": "def solve(nums):\n    l, r = 0, len(nums)-1\n    while l < r:\n        m = (l+r)//2\n        if nums[m] > nums[r]: l = m+1\n        else: r = m\n    return nums[l]",
+    "tests": [
+      {
+        "input": [
+          [
+            4,
+            5,
+            6,
+            7,
+            0,
+            1,
+            2
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "input": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "input": [
+          [
+            1
+          ]
+        ],
+        "expected": 1
+      }
+    ]
+  },
+  {
+    "id": "search-in-rotated-sorted-array",
+    "title": "Search in Rotated Sorted Array",
+    "track": "python",
+    "pattern": "Binary search",
+    "difficulty": "Medium",
+    "args": "nums, target",
+    "prompt": "Return target index or -1 in a rotated sorted array of distinct integers.",
+    "idea": "One half is always sorted; use its boundary values to decide whether to search it.",
+    "steps": [
+      "For [4,5,6,7,0,1,2], middle 7 has a sorted left half.",
+      "Target 0 is outside [4,7], so search right.",
+      "Repeat the same decision until target is found."
+    ],
+    "complexity": "O(log n) time · O(1) space",
+    "solution": "def solve(nums, target):\n    l, r = 0, len(nums)-1\n    while l <= r:\n        m = (l+r)//2\n        if nums[m] == target: return m\n        if nums[l] <= nums[m]:\n            if nums[l] <= target < nums[m]: r = m-1\n            else: l = m+1\n        else:\n            if nums[m] < target <= nums[r]: l = m+1\n            else: r = m-1\n    return -1",
+    "tests": [
+      {
+        "input": [
+          [
+            4,
+            5,
+            6,
+            7,
+            0,
+            1,
+            2
+          ],
+          0
+        ],
+        "expected": 4
+      },
+      {
+        "input": [
+          [
+            1
+          ],
+          3
+        ],
+        "expected": -1
+      },
+      {
+        "input": [
+          [],
+          1
+        ],
+        "expected": -1
+      }
+    ]
+  },
+  {
+    "id": "3sum",
+    "title": "3Sum",
+    "track": "python",
+    "pattern": "Two pointers",
+    "difficulty": "Medium",
+    "args": "nums",
+    "prompt": "Return unique triplets summing to zero, sorted internally and in lexicographic order.",
+    "idea": "Sorting lets two pointers move predictably while duplicate skipping avoids repeated answers.",
+    "steps": [
+      "Sort [-1,0,1,2,-1,-4] to [-4,-1,-1,0,1,2].",
+      "Fix -1 and move left/right pointers to find [-1,-1,2] and [-1,0,1].",
+      "Skip repeated fixed and pointer values."
+    ],
+    "complexity": "O(n²) time · O(n) sorting space plus output",
+    "solution": "def solve(nums):\n    nums = sorted(nums)\n    result = []\n    for i in range(len(nums)-2):\n        if i and nums[i] == nums[i-1]: continue\n        l, r = i+1, len(nums)-1\n        while l < r:\n            total = nums[i]+nums[l]+nums[r]\n            if total < 0: l += 1\n            elif total > 0: r -= 1\n            else:\n                result.append([nums[i],nums[l],nums[r]])\n                l += 1; r -= 1\n                while l < r and nums[l] == nums[l-1]: l += 1\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            -1,
+            0,
+            1,
+            2,
+            -1,
+            -4
+          ]
+        ],
+        "expected": [
+          [
+            -1,
+            -1,
+            2
+          ],
+          [
+            -1,
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "input": [
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "expected": [
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "input": [
+          [
+            1,
+            2
+          ]
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "container-with-most-water",
+    "title": "Container With Most Water",
+    "track": "python",
+    "pattern": "Two pointers",
+    "difficulty": "Medium",
+    "args": "height",
+    "prompt": "Return the maximum water area between two vertical lines. Heights are nonnegative.",
+    "idea": "The shorter wall limits the water; moving the taller wall cannot improve it.",
+    "steps": [
+      "Start at both ends of [1,8,6,2,5,4,8,3,7].",
+      "Move the shorter left wall to 8; width 7 × height 7 = 49.",
+      "Continue inward, recording the best area."
+    ],
+    "complexity": "O(n) time · O(1) space",
+    "solution": "def solve(height):\n    l, r, best = 0, len(height)-1, 0\n    while l < r:\n        best = max(best, (r-l)*min(height[l],height[r]))\n        if height[l] < height[r]: l += 1\n        else: r -= 1\n    return best",
+    "tests": [
+      {
+        "input": [
+          [
+            1,
+            8,
+            6,
+            2,
+            5,
+            4,
+            8,
+            3,
+            7
+          ]
+        ],
+        "expected": 49
+      },
+      {
+        "input": [
+          [
+            1,
+            1
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "sum-of-two-integers",
+    "title": "Sum of Two Integers",
+    "track": "python",
+    "pattern": "Bit manipulation",
+    "difficulty": "Medium",
+    "args": "a, b",
+    "prompt": "Add two signed 32-bit integers without + or - in the arithmetic algorithm. The result fits signed 32-bit.",
+    "idea": "XOR adds without carries; AND shifted left locates the carries. Mask to 32 bits because Python integers are unbounded.",
+    "steps": [
+      "For 1 and 3: XOR produces 2; carry produces 2.",
+      "Repeat on 2 and 2: XOR 0, carry 4.",
+      "A final pass gives 4 with no carry."
+    ],
+    "complexity": "O(32) time · O(1) space",
+    "solution": "def solve(a, b):\n    mask = 0xffffffff\n    a &= mask; b &= mask\n    while b:\n        a, b = (a ^ b) & mask, ((a & b) << 1) & mask\n    return a if a < 0x80000000 else ~(a ^ mask)",
+    "tests": [
+      {
+        "input": [
+          1,
+          3
+        ],
+        "expected": 4
+      },
+      {
+        "input": [
+          -2,
+          1
+        ],
+        "expected": -1
+      },
+      {
+        "input": [
+          -5,
+          -7
+        ],
+        "expected": -12
+      }
+    ]
+  },
+  {
+    "id": "number-of-1-bits",
+    "title": "Number of 1 Bits",
+    "track": "python",
+    "pattern": "Bit manipulation",
+    "difficulty": "Easy",
+    "args": "n",
+    "prompt": "Count set bits in a nonnegative 32-bit integer.",
+    "idea": "n & (n-1) removes the lowest set bit.",
+    "steps": [
+      "11 is binary 1011.",
+      "Clear one bit: 1010, then 1000, then 0000.",
+      "Three removals means three set bits."
+    ],
+    "complexity": "O(k) time for k set bits · O(1) space",
+    "solution": "def solve(n):\n    count = 0\n    while n:\n        n &= n-1\n        count += 1\n    return count",
+    "tests": [
+      {
+        "input": [
+          11
+        ],
+        "expected": 3
+      },
+      {
+        "input": [
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "input": [
+          4294967295
+        ],
+        "expected": 32
+      }
+    ]
+  },
+  {
+    "id": "counting-bits",
+    "title": "Counting Bits",
+    "track": "python",
+    "pattern": "Bit manipulation",
+    "difficulty": "Easy",
+    "args": "n",
+    "prompt": "Return set-bit counts for every integer from 0 through nonnegative n.",
+    "idea": "Removing the final binary digit halves the number; the last bit contributes either 0 or 1.",
+    "steps": [
+      "count(0)=0.",
+      "count(2)=count(1)+0=1.",
+      "count(3)=count(1)+1=2, giving [0,1,1,2] through 3."
+    ],
+    "complexity": "O(n) time · O(n) space",
+    "solution": "def solve(n):\n    dp = [0]*(n+1)\n    for i in range(1,n+1): dp[i] = dp[i//2] + (i & 1)\n    return dp",
+    "tests": [
+      {
+        "input": [
+          5
+        ],
+        "expected": [
+          0,
+          1,
+          1,
+          2,
+          1,
+          2
+        ]
+      },
+      {
+        "input": [
+          0
+        ],
+        "expected": [
+          0
+        ]
+      },
+      {
+        "input": [
+          1
+        ],
+        "expected": [
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  {
+    "id": "missing-number",
+    "title": "Missing Number",
+    "track": "python",
+    "pattern": "Bit manipulation",
+    "difficulty": "Easy",
+    "args": "nums",
+    "prompt": "Distinct nums contains n values from 0..n with exactly one missing. Return it.",
+    "idea": "XOR cancels equal values, leaving only the missing one.",
+    "steps": [
+      "For [3,0,1], XOR all indices 0,1,2 plus 3.",
+      "XOR each array value too.",
+      "Every paired value cancels; 2 remains."
+    ],
+    "complexity": "O(n) time · O(1) space",
+    "solution": "def solve(nums):\n    result = len(nums)\n    for i,n in enumerate(nums): result ^= i ^ n\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            3,
+            0,
+            1
+          ]
+        ],
+        "expected": 2
+      },
+      {
+        "input": [
+          [
+            0
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "reverse-bits",
+    "title": "Reverse Bits",
+    "track": "python",
+    "pattern": "Bit manipulation",
+    "difficulty": "Easy",
+    "args": "n",
+    "prompt": "Reverse the 32-bit unsigned representation of n and return its integer value.",
+    "idea": "Build a new number one bit at a time from the input’s right edge.",
+    "steps": [
+      "Read the least significant bit.",
+      "Shift the result left and append that bit.",
+      "Repeat exactly 32 times so leading zero bits are retained."
+    ],
+    "complexity": "O(32) time · O(1) space",
+    "solution": "def solve(n):\n    result = 0\n    for _ in range(32):\n        result = (result << 1) | (n & 1)\n        n >>= 1\n    return result",
+    "tests": [
+      {
+        "input": [
+          43261596
+        ],
+        "expected": 964176192
+      },
+      {
+        "input": [
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "input": [
+          1
+        ],
+        "expected": 2147483648
+      }
+    ]
+  },
+  {
+    "id": "climbing-stairs",
+    "title": "Climbing Stairs",
+    "track": "python",
+    "pattern": "Dynamic programming",
+    "difficulty": "Easy",
+    "args": "n",
+    "prompt": "Count ways to climb n stairs using steps of size 1 or 2. n >= 0; the empty climb has one way.",
+    "idea": "The last move came from one stair below or two stairs below.",
+    "steps": [
+      "ways(0)=1 and ways(1)=1.",
+      "ways(2)=2 and ways(3)=3.",
+      "Keep only the previous two counts."
+    ],
+    "complexity": "O(n) time · O(1) space",
+    "solution": "def solve(n):\n    a, b = 1, 1\n    for _ in range(n): a, b = b, a+b\n    return a",
+    "tests": [
+      {
+        "input": [
+          3
+        ],
+        "expected": 3
+      },
+      {
+        "input": [
+          0
+        ],
+        "expected": 1
+      },
+      {
+        "input": [
+          5
+        ],
+        "expected": 8
+      }
+    ]
+  },
+  {
+    "id": "coin-change",
+    "title": "Coin Change",
+    "track": "python",
+    "pattern": "Dynamic programming",
+    "difficulty": "Medium",
+    "args": "coins, amount",
+    "prompt": "Return the fewest coins needed for amount, or -1. Coins are positive and reusable; amount >= 0.",
+    "idea": "Solve smaller totals first; the last coin extends the best solution for the remaining amount.",
+    "steps": [
+      "For coins [1,2,5], dp[0]=0.",
+      "For each amount x, try 1 + dp[x-coin].",
+      "For 11, the best is 5+5+1, so return 3."
+    ],
+    "complexity": "O(amount × number of coins) time · O(amount) space",
+    "solution": "def solve(coins, amount):\n    dp = [0]+[amount+1]*amount\n    for x in range(1,amount+1):\n        for c in coins:\n            if c <= x: dp[x] = min(dp[x],dp[x-c]+1)\n    return dp[amount] if dp[amount] <= amount else -1",
+    "tests": [
+      {
+        "input": [
+          [
+            1,
+            2,
+            5
+          ],
+          11
+        ],
+        "expected": 3
+      },
+      {
+        "input": [
+          [
+            2
+          ],
+          3
+        ],
+        "expected": -1
+      },
+      {
+        "input": [
+          [
+            1
+          ],
+          0
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "longest-increasing-subsequence",
+    "title": "Longest Increasing Subsequence",
+    "track": "python",
+    "pattern": "Dynamic programming",
+    "difficulty": "Medium",
+    "args": "nums",
+    "prompt": "Return the length of a strictly increasing subsequence, not necessarily contiguous.",
+    "idea": "Keep the smallest possible tail for an increasing subsequence of each length.",
+    "steps": [
+      "For [10,9,2,5,3,7,101,18], replace tails rather than preserving a particular subsequence.",
+      "A smaller tail leaves more room for future values.",
+      "The final tails length is 4."
+    ],
+    "complexity": "O(n log n) time · O(n) space",
+    "solution": "def solve(nums):\n    from bisect import bisect_left\n    tails = []\n    for n in nums:\n        i = bisect_left(tails,n)\n        if i == len(tails): tails.append(n)\n        else: tails[i] = n\n    return len(tails)",
+    "tests": [
+      {
+        "input": [
+          [
+            10,
+            9,
+            2,
+            5,
+            3,
+            7,
+            101,
+            18
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "input": [
+          [
+            2,
+            2,
+            2
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "longest-common-subsequence",
+    "title": "Longest Common Subsequence",
+    "track": "python",
+    "pattern": "Dynamic programming",
+    "difficulty": "Medium",
+    "args": "a, b",
+    "prompt": "Return the length of the longest sequence appearing in order in both strings.",
+    "idea": "Matching characters extend the diagonal answer; otherwise skip one character from either side.",
+    "steps": [
+      "For abcde and ace, a matches a.",
+      "Then c and e extend the common sequence.",
+      "A DP row remembers the best lengths for prefixes of b."
+    ],
+    "complexity": "O(len(a) × len(b)) time · O(len(b)) space",
+    "solution": "def solve(a, b):\n    prev = [0]*(len(b)+1)\n    for x in a:\n        row = [0]\n        for j,y in enumerate(b):\n            row.append(prev[j]+1 if x == y else max(prev[j+1],row[-1]))\n        prev = row\n    return prev[-1]",
+    "tests": [
+      {
+        "input": [
+          "abcde",
+          "ace"
+        ],
+        "expected": 3
+      },
+      {
+        "input": [
+          "abc",
+          "def"
+        ],
+        "expected": 0
+      },
+      {
+        "input": [
+          "",
+          "abc"
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "word-break",
+    "title": "Word Break",
+    "track": "python",
+    "pattern": "Dynamic programming",
+    "difficulty": "Medium",
+    "args": "s, words",
+    "prompt": "Return whether s can be split completely into nonempty dictionary words. Words may be reused.",
+    "idea": "A prefix is reachable if a reachable earlier prefix ends with a dictionary word.",
+    "steps": [
+      "For leetcode with [leet,code], prefix 0 is reachable.",
+      "leet makes prefix 4 reachable.",
+      "code extends it to prefix 8, the end."
+    ],
+    "complexity": "O(n² × L) time for Python slicing, L=max word length · O(n + dictionary size) space",
+    "solution": "def solve(s, words):\n    words = set(words)\n    dp = [True]+[False]*len(s)\n    for end in range(1,len(s)+1):\n        dp[end] = any(dp[start] and s[start:end] in words for start in range(end))\n    return dp[-1]",
+    "tests": [
+      {
+        "input": [
+          "leetcode",
+          [
+            "leet",
+            "code"
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          "catsandog",
+          [
+            "cats",
+            "dog",
+            "sand",
+            "and",
+            "cat"
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          "",
+          []
+        ],
+        "expected": true
+      }
+    ]
+  },
+  {
+    "id": "combination-sum",
+    "title": "Combination Sum",
+    "track": "python",
+    "pattern": "Backtracking",
+    "difficulty": "Medium",
+    "args": "candidates, target",
+    "prompt": "Return unique nondecreasing combinations totaling target, in lexicographic order. Candidates are distinct positive integers and reusable.",
+    "idea": "A start index prevents permutations of the same combination.",
+    "steps": [
+      "Sort [2,3,6,7].",
+      "Choose 2 repeatedly; backtrack when the remainder is too small.",
+      "Find [2,2,3] and [7]; retain the same start index when reusing a value."
+    ],
+    "complexity": "Exponential search time · O(target/min(candidates)) recursion space excluding output",
+    "solution": "def solve(candidates, target):\n    candidates = sorted(candidates)\n    result = []\n    def visit(start, remaining, path):\n        if remaining == 0:\n            result.append(path); return\n        for i in range(start,len(candidates)):\n            c = candidates[i]\n            if c > remaining: break\n            visit(i,remaining-c,path+[c])\n    visit(0,target,[])\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            2,
+            3,
+            6,
+            7
+          ],
+          7
+        ],
+        "expected": [
+          [
+            2,
+            2,
+            3
+          ],
+          [
+            7
+          ]
+        ]
+      },
+      {
+        "input": [
+          [
+            2
+          ],
+          1
+        ],
+        "expected": []
+      },
+      {
+        "input": [
+          [
+            2
+          ],
+          0
+        ],
+        "expected": [
+          []
+        ]
+      }
+    ]
+  },
+  {
+    "id": "house-robber",
+    "title": "House Robber",
+    "track": "python",
+    "pattern": "Dynamic programming",
+    "difficulty": "Medium",
+    "args": "nums",
+    "prompt": "Return the largest sum of nonadjacent nonnegative house values.",
+    "idea": "At each house, choose between skipping it and taking it plus the best from two houses back.",
+    "steps": [
+      "For [2,7,9,3,1], best totals become 2,7,11,11,12.",
+      "Taking 9 uses the earlier 2, not adjacent 7.",
+      "Only two previous totals are needed."
+    ],
+    "complexity": "O(n) time · O(1) space",
+    "solution": "def solve(nums):\n    a = b = 0\n    for n in nums: a,b = b,max(b,a+n)\n    return b",
+    "tests": [
+      {
+        "input": [
+          [
+            2,
+            7,
+            9,
+            3,
+            1
+          ]
+        ],
+        "expected": 12
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": 0
+      },
+      {
+        "input": [
+          [
+            2,
+            1,
+            1,
+            2
+          ]
+        ],
+        "expected": 4
+      }
+    ]
+  },
+  {
+    "id": "house-robber-ii",
+    "title": "House Robber II",
+    "track": "python",
+    "pattern": "Dynamic programming",
+    "difficulty": "Medium",
+    "args": "nums",
+    "prompt": "Houses form a circle; return the maximum nonadjacent sum. First and last houses are adjacent.",
+    "idea": "The first and last house cannot both be taken: solve the two linear cases.",
+    "steps": [
+      "For [2,3,2], exclude the last house: best 3.",
+      "Exclude the first house: best 3.",
+      "Take the larger answer; handle a single house separately."
+    ],
+    "complexity": "O(n) time · O(n) space from slices",
+    "solution": "def solve(nums):\n    def rob(values):\n        a=b=0\n        for n in values: a,b=b,max(b,a+n)\n        return b\n    if len(nums) <= 1: return sum(nums)\n    return max(rob(nums[:-1]),rob(nums[1:]))",
+    "tests": [
+      {
+        "input": [
+          [
+            2,
+            3,
+            2
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "input": [
+          [
+            1,
+            2,
+            3,
+            1
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "input": [
+          [
+            5
+          ]
+        ],
+        "expected": 5
+      }
+    ]
+  },
+  {
+    "id": "decode-ways",
+    "title": "Decode Ways",
+    "track": "python",
+    "pattern": "Dynamic programming",
+    "difficulty": "Medium",
+    "args": "s",
+    "prompt": "Count decodings of a digit string using 1→A through 26→Z. Zero cannot stand alone; empty input returns 0.",
+    "idea": "Each suffix can finish with one valid digit or a valid pair.",
+    "steps": [
+      "For 226: take 2",
+      "2",
+      "6, 22",
+      "6, or 2",
+      "26.",
+      "A single 0 adds no paths.",
+      "A pair is allowed only from 10 through 26."
+    ],
+    "complexity": "O(n) time · O(1) space",
+    "solution": "def solve(s):\n    if not s: return 0\n    a,b = 1,int(s[0] != '0')\n    for i in range(1,len(s)):\n        current = b if s[i] != '0' else 0\n        if 10 <= int(s[i-1:i+1]) <= 26: current += a\n        a,b = b,current\n    return b",
+    "tests": [
+      {
+        "input": [
+          "226"
+        ],
+        "expected": 3
+      },
+      {
+        "input": [
+          "06"
+        ],
+        "expected": 0
+      },
+      {
+        "input": [
+          "10"
+        ],
+        "expected": 1
+      }
+    ]
+  },
+  {
+    "id": "unique-paths",
+    "title": "Unique Paths",
+    "track": "python",
+    "pattern": "Dynamic programming",
+    "difficulty": "Medium",
+    "args": "m, n",
+    "prompt": "Count paths through an m by n grid moving only right or down. Both dimensions are positive.",
+    "idea": "Every cell receives paths from above and from its left.",
+    "steps": [
+      "Initialize the first row to one path per cell.",
+      "For each next row, add the left value into the current value.",
+      "A 3×7 grid ends with 28 paths."
+    ],
+    "complexity": "O(mn) time · O(n) space",
+    "solution": "def solve(m, n):\n    row = [1]*n\n    for _ in range(m-1):\n        for j in range(1,n): row[j] += row[j-1]\n    return row[-1]",
+    "tests": [
+      {
+        "input": [
+          3,
+          7
+        ],
+        "expected": 28
+      },
+      {
+        "input": [
+          1,
+          5
+        ],
+        "expected": 1
+      },
+      {
+        "input": [
+          3,
+          2
+        ],
+        "expected": 3
+      }
+    ]
+  },
+  {
+    "id": "jump-game",
+    "title": "Jump Game",
+    "track": "python",
+    "pattern": "Greedy",
+    "difficulty": "Medium",
+    "args": "nums",
+    "prompt": "Each nonnegative value is the maximum jump length from that position. Return whether the final index is reachable; empty input returns false.",
+    "idea": "Track the farthest reachable index instead of exploring every jump.",
+    "steps": [
+      "For [2,3,1,1,4], index 0 reaches 2.",
+      "Index 1 extends reach to 4.",
+      "An index beyond the current reach is a gap that cannot be crossed."
+    ],
+    "complexity": "O(n) time · O(1) space",
+    "solution": "def solve(nums):\n    reach = 0\n    for i,n in enumerate(nums):\n        if i > reach: return False\n        reach = max(reach,i+n)\n    return bool(nums)",
+    "tests": [
+      {
+        "input": [
+          [
+            2,
+            3,
+            1,
+            1,
+            4
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          [
+            3,
+            2,
+            1,
+            0,
+            4
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          [
+            0
+          ]
+        ],
+        "expected": true
+      }
+    ]
+  },
+  {
+    "id": "clone-graph",
+    "title": "Clone Graph",
+    "track": "python",
+    "pattern": "Graphs",
+    "difficulty": "Medium",
+    "args": "adj",
+    "prompt": "Clone an undirected graph given an adjacency list of zero-based neighbors. Return an independent adjacency list in the same order.",
+    "idea": "Memoization preserves identity and stops cycles; this JSON adapter represents each node by its index.",
+    "steps": [
+      "Build graph nodes from the adjacency list.",
+      "Create and memoize a new node before recursively cloning its neighbors; this breaks cycles.",
+      "Serialize the cloned graph in the original node order. No cloned node refers to an original node."
+    ],
+    "complexity": "O(V+E) time · O(V+E) space",
+    "solution": "def solve(adj):\n    class Node:\n        def __init__(self, value):\n            self.value = value\n            self.neighbors = []\n    nodes = [Node(i) for i in range(len(adj))]\n    for i, neighbors in enumerate(adj):\n        nodes[i].neighbors = [nodes[j] for j in neighbors]\n    copies = {}\n    def clone(node):\n        if node in copies:\n            return copies[node]\n        copied = Node(node.value)\n        copies[node] = copied\n        copied.neighbors = [clone(n) for n in node.neighbors]\n        return copied\n    # Include disconnected components in the JSON adapter.\n    cloned = [clone(node) for node in nodes]\n    return [[n.value for n in node.neighbors] for node in cloned]",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              1
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            1
+          ]
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "input": [
+          [
+            []
+          ]
+        ],
+        "expected": [
+          []
+        ]
+      }
+    ]
+  },
+  {
+    "id": "course-schedule",
+    "title": "Course Schedule",
+    "track": "python",
+    "pattern": "Graphs",
+    "difficulty": "Medium",
+    "args": "n, prerequisites",
+    "prompt": "Courses are 0..n-1. Each [a,b] means b must precede a. Return whether all courses can be finished.",
+    "idea": "A topological ordering exists exactly when every course can be removed by repeatedly taking zero-prerequisite courses.",
+    "steps": [
+      "Count prerequisites and build edges b → a.",
+      "Queue all courses with indegree 0.",
+      "Remove them and unlock neighbors; fewer than n removed means a cycle."
+    ],
+    "complexity": "O(V+E) time · O(V+E) space",
+    "solution": "def solve(n, prerequisites):\n    from collections import deque\n    adj = [[] for _ in range(n)]; degree = [0]*n\n    for a,b in prerequisites: adj[b].append(a); degree[a] += 1\n    queue = deque(i for i in range(n) if degree[i] == 0)\n    count = 0\n    while queue:\n        node = queue.popleft(); count += 1\n        for nxt in adj[node]:\n            degree[nxt] -= 1\n            if degree[nxt] == 0: queue.append(nxt)\n    return count == n",
+    "tests": [
+      {
+        "input": [
+          2,
+          [
+            [
+              1,
+              0
+            ]
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          2,
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          0,
+          []
+        ],
+        "expected": true
+      }
+    ]
+  },
+  {
+    "id": "pacific-atlantic-water-flow",
+    "title": "Pacific Atlantic Water Flow",
+    "track": "python",
+    "pattern": "Graphs",
+    "difficulty": "Medium",
+    "args": "heights",
+    "prompt": "Return [row,col] coordinates, in row-major order, from which water reaches both top/left and bottom/right ocean edges. Water moves to equal or lower orthogonal neighbors.",
+    "idea": "Reverse the flow: start at ocean edges and walk uphill to discover cells that can drain there.",
+    "steps": [
+      "Flood uphill from top and left for Pacific.",
+      "Flood uphill from bottom and right for Atlantic.",
+      "Intersect the reachable sets, then sort the coordinates."
+    ],
+    "complexity": "O(rows × cols) time · O(rows × cols) space",
+    "solution": "def solve(heights):\n    if not heights or not heights[0]: return []\n    m,n = len(heights),len(heights[0])\n    def flood(starts):\n        seen = set(starts); stack = list(seen)\n        while stack:\n            r,c = stack.pop()\n            for x,y in ((r+1,c),(r-1,c),(r,c+1),(r,c-1)):\n                if 0<=x<m and 0<=y<n and (x,y) not in seen and heights[x][y]>=heights[r][c]:\n                    seen.add((x,y)); stack.append((x,y))\n        return seen\n    p = flood([(0,c) for c in range(n)]+[(r,0) for r in range(m)])\n    a = flood([(m-1,c) for c in range(n)]+[(r,n-1) for r in range(m)])\n    return [list(cell) for cell in sorted(p & a)]",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              4,
+              3
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      },
+      {
+        "input": [
+          [
+            [
+              1
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "number-of-islands",
+    "title": "Number of Islands",
+    "track": "python",
+    "pattern": "Graphs",
+    "difficulty": "Medium",
+    "args": "grid",
+    "prompt": "Count connected islands of 1 in a rectangular 0/1 grid. Connections are orthogonal.",
+    "idea": "Each unvisited land cell starts one flood fill and therefore one island.",
+    "steps": [
+      "Scan each cell.",
+      "On unseen land, increment the island count and mark all connected land.",
+      "Continue scanning; marked land never starts another island."
+    ],
+    "complexity": "O(rows × cols) time · O(rows × cols) space",
+    "solution": "def solve(grid):\n    if not grid: return 0\n    m,n = len(grid),len(grid[0]); seen=set(); count=0\n    for r in range(m):\n        for c in range(n):\n            if grid[r][c] != 1 or (r,c) in seen: continue\n            count += 1; stack=[(r,c)]; seen.add((r,c))\n            while stack:\n                x,y=stack.pop()\n                for a,b in ((x+1,y),(x-1,y),(x,y+1),(x,y-1)):\n                    if 0<=a<m and 0<=b<n and grid[a][b]==1 and (a,b) not in seen:\n                        seen.add((a,b)); stack.append((a,b))\n    return count",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              0,
+              1
+            ]
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "input": [
+          [
+            [
+              0
+            ]
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "longest-consecutive-sequence",
+    "title": "Longest Consecutive Sequence",
+    "track": "python",
+    "pattern": "Hash maps",
+    "difficulty": "Medium",
+    "args": "nums",
+    "prompt": "Return the longest run of consecutive integer values, regardless of input order.",
+    "idea": "Start only at a value with no predecessor so each run is scanned once.",
+    "steps": [
+      "For [100,4,200,1,3,2], 1 has no predecessor.",
+      "Walk 1→2→3→4 for length 4.",
+      "Do not start again at 2,3,4."
+    ],
+    "complexity": "O(n) expected time · O(n) space",
+    "solution": "def solve(nums):\n    values=set(nums); best=0\n    for x in values:\n        if x-1 not in values:\n            end=x\n            while end in values: end += 1\n            best=max(best,end-x)\n    return best",
+    "tests": [
+      {
+        "input": [
+          [
+            100,
+            4,
+            200,
+            1,
+            3,
+            2
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "input": [
+          [
+            1,
+            1,
+            2
+          ]
+        ],
+        "expected": 2
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "alien-dictionary",
+    "title": "Alien Dictionary",
+    "track": "python",
+    "pattern": "Graphs",
+    "difficulty": "Hard",
+    "args": "words",
+    "prompt": "Infer character order from words sorted in an unknown alphabet. Return the lexicographically smallest valid order, or an empty string for invalid input.",
+    "idea": "Only the first differing character in adjacent words creates an ordering constraint.",
+    "steps": [
+      "Compare adjacent words and record one edge at the first difference.",
+      "Reject a longer word before its exact prefix.",
+      "Use a min-heap topological sort for deterministic tie handling; reject cycles."
+    ],
+    "complexity": "O(total characters + E + V log V) time · O(V+E) space",
+    "solution": "def solve(words):\n    import heapq\n    adj={c:set() for w in words for c in w}; degree={c:0 for c in adj}\n    for a,b in zip(words,words[1:]):\n        if len(a)>len(b) and a.startswith(b): return ''\n        for x,y in zip(a,b):\n            if x != y:\n                if y not in adj[x]: adj[x].add(y); degree[y]+=1\n                break\n    heap=[c for c in degree if not degree[c]]; heapq.heapify(heap); result=''\n    while heap:\n        c=heapq.heappop(heap); result+=c\n        for nxt in adj[c]:\n            degree[nxt]-=1\n            if degree[nxt]==0: heapq.heappush(heap,nxt)\n    return result if len(result)==len(adj) else ''",
+    "tests": [
+      {
+        "input": [
+          [
+            "wrt",
+            "wrf",
+            "er",
+            "ett",
+            "rftt"
+          ]
+        ],
+        "expected": "wertf"
+      },
+      {
+        "input": [
+          [
+            "abc",
+            "ab"
+          ]
+        ],
+        "expected": ""
+      },
+      {
+        "input": [
+          [
+            "z",
+            "x",
+            "z"
+          ]
+        ],
+        "expected": ""
+      }
+    ]
+  },
+  {
+    "id": "graph-valid-tree",
+    "title": "Graph Valid Tree",
+    "track": "python",
+    "pattern": "Graphs",
+    "difficulty": "Medium",
+    "args": "n, edges",
+    "prompt": "Return whether an undirected graph with nodes 0..n-1 is a tree. n >= 1.",
+    "idea": "A connected graph with n-1 edges is a tree.",
+    "steps": [
+      "First check the edge count.",
+      "Traverse from node 0, marking reachable nodes.",
+      "All n nodes must be reached."
+    ],
+    "complexity": "O(V+E) time · O(V+E) space",
+    "solution": "def solve(n, edges):\n    if len(edges) != n-1: return False\n    adj=[[] for _ in range(n)]\n    for a,b in edges: adj[a].append(b); adj[b].append(a)\n    seen={0}; stack=[0]\n    while stack:\n        for nxt in adj[stack.pop()]:\n            if nxt not in seen: seen.add(nxt); stack.append(nxt)\n    return len(seen)==n",
+    "tests": [
+      {
+        "input": [
+          5,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              1,
+              4
+            ]
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          3,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              0
+            ]
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          1,
+          []
+        ],
+        "expected": true
+      }
+    ]
+  },
+  {
+    "id": "number-of-connected-components",
+    "title": "Number of Connected Components",
+    "track": "python",
+    "pattern": "Graphs",
+    "difficulty": "Medium",
+    "args": "n, edges",
+    "prompt": "Count connected components in an undirected graph on 0..n-1.",
+    "idea": "Union-find merges components whenever an edge connects previously separate roots.",
+    "steps": [
+      "Start with n singleton components.",
+      "For each edge, find both roots and merge different ones.",
+      "Each successful merge decreases the count by one."
+    ],
+    "complexity": "O((V+E) α(V)) amortized time · O(V) space",
+    "solution": "def solve(n, edges):\n    parent=list(range(n)); size=[1]*n; count=n\n    def find(x):\n        while parent[x]!=x:\n            parent[x]=parent[parent[x]]; x=parent[x]\n        return x\n    for a,b in edges:\n        a,b=find(a),find(b)\n        if a==b: continue\n        if size[a]<size[b]: a,b=b,a\n        parent[b]=a; size[a]+=size[b]; count-=1\n    return count",
+    "tests": [
+      {
+        "input": [
+          5,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        ],
+        "expected": 2
+      },
+      {
+        "input": [
+          3,
+          []
+        ],
+        "expected": 3
+      },
+      {
+        "input": [
+          0,
+          []
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "insert-interval",
+    "title": "Insert Interval",
+    "track": "python",
+    "pattern": "Intervals",
+    "difficulty": "Medium",
+    "args": "intervals, new",
+    "prompt": "Insert new into sorted disjoint closed intervals, merging overlaps.",
+    "idea": "Intervals before the new range can be copied; overlapping ones enlarge it; the rest follow unchanged.",
+    "steps": [
+      "Copy intervals ending before new starts.",
+      "Expand new across every intersecting interval.",
+      "Append new, then the untouched suffix."
+    ],
+    "complexity": "O(n) time · O(n) output space",
+    "solution": "def solve(intervals, new):\n    result=[]; start,end=new; i=0\n    while i<len(intervals) and intervals[i][1]<start:\n        result.append(intervals[i]); i+=1\n    while i<len(intervals) and intervals[i][0]<=end:\n        start=min(start,intervals[i][0]); end=max(end,intervals[i][1]); i+=1\n    return result+[[start,end]]+intervals[i:]",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              1,
+              3
+            ],
+            [
+              6,
+              9
+            ]
+          ],
+          [
+            2,
+            5
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            5
+          ],
+          [
+            6,
+            9
+          ]
+        ]
+      },
+      {
+        "input": [
+          [],
+          [
+            2,
+            3
+          ]
+        ],
+        "expected": [
+          [
+            2,
+            3
+          ]
+        ]
+      },
+      {
+        "input": [
+          [
+            [
+              1,
+              2
+            ]
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "merge-intervals",
+    "title": "Merge Intervals",
+    "track": "python",
+    "pattern": "Intervals",
+    "difficulty": "Medium",
+    "args": "intervals",
+    "prompt": "Merge overlapping closed intervals and return them by start time. Touching endpoints overlap.",
+    "idea": "Once sorted, only the last merged interval can overlap the next one.",
+    "steps": [
+      "Sort [[1,3],[2,6],[8,10]].",
+      "The first two overlap and become [1,6].",
+      "[8,10] starts a new interval."
+    ],
+    "complexity": "O(n log n) time · O(n) space",
+    "solution": "def solve(intervals):\n    result=[]\n    for start,end in sorted(intervals):\n        if result and start<=result[-1][1]: result[-1][1]=max(result[-1][1],end)\n        else: result.append([start,end])\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              1,
+              3
+            ],
+            [
+              2,
+              6
+            ],
+            [
+              8,
+              10
+            ],
+            [
+              15,
+              18
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            6
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            15,
+            18
+          ]
+        ]
+      },
+      {
+        "input": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            3
+          ]
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "non-overlapping-intervals",
+    "title": "Non-overlapping Intervals",
+    "track": "python",
+    "pattern": "Intervals",
+    "difficulty": "Medium",
+    "args": "intervals",
+    "prompt": "Return the fewest intervals to remove so the remaining intervals do not overlap. Touching endpoints are allowed.",
+    "idea": "Keep the interval ending earliest to leave the most room for later intervals.",
+    "steps": [
+      "Sort by end time.",
+      "Keep an interval if its start is at least the previous end.",
+      "Count every rejected interval."
+    ],
+    "complexity": "O(n log n) time · O(n) sorting space",
+    "solution": "def solve(intervals):\n    end=float('-inf'); removed=0\n    for a,b in sorted(intervals,key=lambda x:x[1]):\n        if a<end: removed+=1\n        else: end=b\n    return removed",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              1,
+              3
+            ]
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "input": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        ],
+        "expected": 2
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "meeting-rooms",
+    "title": "Meeting Rooms",
+    "track": "python",
+    "pattern": "Intervals",
+    "difficulty": "Easy",
+    "args": "intervals",
+    "prompt": "Return whether one person can attend all positive-duration meetings. End equals next start is allowed.",
+    "idea": "After sorting, adjacent meetings are enough to detect a conflict.",
+    "steps": [
+      "Order meetings by start.",
+      "Compare each start with the previous end.",
+      "An earlier start means an overlap."
+    ],
+    "complexity": "O(n log n) time · O(n) sorting space",
+    "solution": "def solve(intervals):\n    intervals=sorted(intervals)\n    return all(intervals[i][0]>=intervals[i-1][1] for i in range(1,len(intervals)))",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              0,
+              30
+            ],
+            [
+              5,
+              10
+            ],
+            [
+              15,
+              20
+            ]
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ]
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": true
+      }
+    ]
+  },
+  {
+    "id": "meeting-rooms-ii",
+    "title": "Meeting Rooms II",
+    "track": "python",
+    "pattern": "Intervals",
+    "difficulty": "Medium",
+    "args": "intervals",
+    "prompt": "Return the minimum number of rooms for positive-duration meetings. A room is reusable at the exact end time.",
+    "idea": "A min-heap tracks end times of currently active meetings.",
+    "steps": [
+      "Process meetings by start.",
+      "Release every room whose meeting has ended.",
+      "Add this meeting and track the largest active count."
+    ],
+    "complexity": "O(n log n) time · O(n) space",
+    "solution": "def solve(intervals):\n    import heapq\n    active=[]; best=0\n    for start,end in sorted(intervals):\n        while active and active[0]<=start: heapq.heappop(active)\n        heapq.heappush(active,end); best=max(best,len(active))\n    return best",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              0,
+              30
+            ],
+            [
+              5,
+              10
+            ],
+            [
+              15,
+              20
+            ]
+          ]
+        ],
+        "expected": 2
+      },
+      {
+        "input": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ]
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "reverse-linked-list",
+    "title": "Reverse Linked List",
+    "track": "python",
+    "pattern": "Linked lists",
+    "difficulty": "Easy",
+    "args": "values",
+    "prompt": "Reverse a singly linked list supplied as values in traversal order. Return its new traversal order. Build nodes and reverse pointers.",
+    "idea": "Save the next pointer before redirecting it to the previous node.",
+    "steps": [
+      "Build 1 → 2 → 3.",
+      "Redirect 1 → null, then 2 → 1, then 3 → 2.",
+      "The previous pointer is now the new head."
+    ],
+    "complexity": "O(n) time · O(n) adapter space; O(1) reversal space",
+    "solution": "def solve(values):\n    class Node:\n        def __init__(self,v,n=None): self.v,self.next=v,n\n    head=None\n    for v in reversed(values): head=Node(v,head)\n    prev=None\n    while head:\n        nxt=head.next; head.next=prev; prev=head; head=nxt\n    result=[]\n    while prev: result.append(prev.v); prev=prev.next\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "expected": [
+          3,
+          2,
+          1
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "input": [
+          [
+            1
+          ]
+        ],
+        "expected": [
+          1
+        ]
+      }
+    ]
+  },
+  {
+    "id": "linked-list-cycle",
+    "title": "Linked List Cycle",
+    "track": "python",
+    "pattern": "Linked lists",
+    "difficulty": "Easy",
+    "args": "values, pos",
+    "prompt": "Build a list from values; tail points to index pos, or null for -1. Return whether there is a cycle.",
+    "idea": "A fast pointer eventually catches a slow pointer inside a cycle.",
+    "steps": [
+      "Connect the tail to pos if pos is nonnegative.",
+      "Move slow once and fast twice.",
+      "Meeting proves a cycle; reaching null proves none."
+    ],
+    "complexity": "O(n) time · O(n) adapter space; O(1) detection space",
+    "solution": "def solve(values, pos):\n    class Node:\n        def __init__(self,v): self.v=v; self.next=None\n    nodes=[Node(v) for v in values]\n    for a,b in zip(nodes,nodes[1:]): a.next=b\n    if nodes and pos>=0: nodes[-1].next=nodes[pos]\n    slow=fast=nodes[0] if nodes else None\n    while fast and fast.next:\n        slow=slow.next; fast=fast.next.next\n        if slow is fast: return True\n    return False",
+    "tests": [
+      {
+        "input": [
+          [
+            3,
+            2,
+            0,
+            -4
+          ],
+          1
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          [
+            1,
+            2
+          ],
+          -1
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          [],
+          -1
+        ],
+        "expected": false
+      }
+    ]
+  },
+  {
+    "id": "merge-two-sorted-lists",
+    "title": "Merge Two Sorted Lists",
+    "track": "python",
+    "pattern": "Linked lists",
+    "difficulty": "Easy",
+    "args": "a, b",
+    "prompt": "Merge two sorted linked-list traversals represented as arrays and return the merged traversal.",
+    "idea": "Choose the smaller head, advance just that input, and retain the remaining suffix.",
+    "steps": [
+      "Compare the two head values.",
+      "Append the smaller one and advance that list.",
+      "When one list ends, attach the rest of the other list."
+    ],
+    "complexity": "O(n+m) time · O(n+m) output space",
+    "solution": "def solve(a, b):\n    i=j=0; result=[]\n    while i<len(a) and j<len(b):\n        if a[i]<=b[j]: result.append(a[i]); i+=1\n        else: result.append(b[j]); j+=1\n    return result+a[i:]+b[j:]",
+    "tests": [
+      {
+        "input": [
+          [
+            1,
+            2,
+            4
+          ],
+          [
+            1,
+            3,
+            4
+          ]
+        ],
+        "expected": [
+          1,
+          1,
+          2,
+          3,
+          4,
+          4
+        ]
+      },
+      {
+        "input": [
+          [],
+          []
+        ],
+        "expected": []
+      },
+      {
+        "input": [
+          [],
+          [
+            0
+          ]
+        ],
+        "expected": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "id": "merge-k-sorted-lists",
+    "title": "Merge K Sorted Lists",
+    "track": "python",
+    "pattern": "Heaps",
+    "difficulty": "Hard",
+    "args": "lists",
+    "prompt": "Merge k sorted linked-list traversals (arrays) into one sorted traversal.",
+    "idea": "A heap exposes the smallest head among k lists without scanning them all.",
+    "steps": [
+      "Push each nonempty list’s first item with its list and position.",
+      "Pop the smallest item into the output.",
+      "Push its successor from the same list."
+    ],
+    "complexity": "O(N log k) time · O(k) heap space excluding output",
+    "solution": "def solve(lists):\n    import heapq\n    heap=[(a[0],i,0) for i,a in enumerate(lists) if a]; heapq.heapify(heap)\n    result=[]\n    while heap:\n        v,i,j=heapq.heappop(heap); result.append(v)\n        if j+1<len(lists[i]): heapq.heappush(heap,(lists[i][j+1],i,j+1))\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              1,
+              4,
+              5
+            ],
+            [
+              1,
+              3,
+              4
+            ],
+            [
+              2,
+              6
+            ]
+          ]
+        ],
+        "expected": [
+          1,
+          1,
+          2,
+          3,
+          4,
+          4,
+          5,
+          6
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "input": [
+          [
+            [],
+            [
+              1
+            ]
+          ]
+        ],
+        "expected": [
+          1
+        ]
+      }
+    ]
+  },
+  {
+    "id": "remove-nth-node-from-end",
+    "title": "Remove Nth Node From End",
+    "track": "python",
+    "pattern": "Linked lists",
+    "difficulty": "Medium",
+    "args": "values, n",
+    "prompt": "Remove the nth node from the end of a linked-list traversal, returned as an array. 1 <= n <= length.",
+    "idea": "Two pointers separated by n positions identify the predecessor of the node to delete.",
+    "steps": [
+      "Build a dummy head before the list.",
+      "Move fast n steps, then advance slow and fast until fast reaches the tail.",
+      "Bypass slow.next and read the resulting traversal."
+    ],
+    "complexity": "O(n) time · O(n) adapter space; O(1) deletion space",
+    "solution": "def solve(values, n):\n    class Node:\n        def __init__(self,v=0,nxt=None): self.v,self.next=v,nxt\n    dummy=Node(); tail=dummy\n    for v in values: tail.next=Node(v); tail=tail.next\n    fast=slow=dummy\n    for _ in range(n): fast=fast.next\n    while fast.next: slow=slow.next; fast=fast.next\n    slow.next=slow.next.next\n    result=[]; node=dummy.next\n    while node: result.append(node.v); node=node.next\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          2
+        ],
+        "expected": [
+          1,
+          2,
+          3,
+          5
+        ]
+      },
+      {
+        "input": [
+          [
+            1
+          ],
+          1
+        ],
+        "expected": []
+      },
+      {
+        "input": [
+          [
+            1,
+            2
+          ],
+          2
+        ],
+        "expected": [
+          2
+        ]
+      }
+    ]
+  },
+  {
+    "id": "reorder-list",
+    "title": "Reorder List",
+    "track": "python",
+    "pattern": "Linked lists",
+    "difficulty": "Medium",
+    "args": "values",
+    "prompt": "Return traversal in first,last,second,second-last order. Build a linked list and rearrange its nodes.",
+    "idea": "Find the midpoint, reverse the second half, then weave the halves together.",
+    "steps": [
+      "For 1→2→3→4→5, split after 3.",
+      "Reverse 4→5 to 5→4.",
+      "Alternate nodes to form 1→5→2→4→3."
+    ],
+    "complexity": "O(n) time · O(n) adapter space; O(1) reordering space",
+    "solution": "def solve(values):\n    class Node:\n        def __init__(self,v): self.v=v; self.next=None\n    nodes=[Node(v) for v in values]\n    for a,b in zip(nodes,nodes[1:]): a.next=b\n    if not nodes: return []\n    head=slow=fast=nodes[0]\n    while fast.next and fast.next.next: slow=slow.next; fast=fast.next.next\n    second=slow.next; slow.next=None; prev=None\n    while second:\n        nxt=second.next; second.next=prev; prev=second; second=nxt\n    first=head; second=prev\n    while second:\n        a,b=first.next,second.next\n        first.next=second; second.next=a; first=a; second=b\n    result=[]\n    while head: result.append(head.v); head=head.next\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        ],
+        "expected": [
+          1,
+          5,
+          2,
+          4,
+          3
+        ]
+      },
+      {
+        "input": [
+          [
+            1,
+            2,
+            3,
+            4
+          ]
+        ],
+        "expected": [
+          1,
+          4,
+          2,
+          3
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "set-matrix-zeroes",
+    "title": "Set Matrix Zeroes",
+    "track": "python",
+    "pattern": "Matrices",
+    "difficulty": "Medium",
+    "args": "matrix",
+    "prompt": "If a cell is zero, zero its entire row and column. Return the modified rectangular matrix.",
+    "idea": "The first row and column can store markers, but remember whether they originally contained zero.",
+    "steps": [
+      "Save whether the first row and column need clearing.",
+      "Mark matrix[r][0] and matrix[0][c] for each interior zero.",
+      "Clear marked interiors, then the first row and column."
+    ],
+    "complexity": "O(rows × cols) time · O(1) extra space",
+    "solution": "def solve(matrix):\n    if not matrix or not matrix[0]: return matrix\n    m,n=len(matrix),len(matrix[0]); row=0 in matrix[0]; col=any(r[0]==0 for r in matrix)\n    for r in range(1,m):\n        for c in range(1,n):\n            if matrix[r][c]==0: matrix[r][0]=matrix[0][c]=0\n    for r in range(1,m):\n        for c in range(1,n):\n            if matrix[r][0]==0 or matrix[0][c]==0: matrix[r][c]=0\n    if row: matrix[0]=[0]*n\n    if col:\n        for r in matrix: r[0]=0\n    return matrix",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              1,
+              1
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "input": [
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "spiral-matrix",
+    "title": "Spiral Matrix",
+    "track": "python",
+    "pattern": "Matrices",
+    "difficulty": "Medium",
+    "args": "matrix",
+    "prompt": "Return all cells of a rectangular matrix in clockwise spiral order.",
+    "idea": "Four boundaries shrink after each outer edge is consumed.",
+    "steps": [
+      "Read top row, then right column.",
+      "If rows remain, read bottom row backward.",
+      "If columns remain, read left column upward, then repeat inward."
+    ],
+    "complexity": "O(rows × cols) time · O(1) extra space excluding output",
+    "solution": "def solve(matrix):\n    if not matrix: return []\n    top,bottom,left,right=0,len(matrix)-1,0,len(matrix[0])-1; result=[]\n    while top<=bottom and left<=right:\n        for c in range(left,right+1): result.append(matrix[top][c])\n        top+=1\n        for r in range(top,bottom+1): result.append(matrix[r][right])\n        right-=1\n        if top<=bottom:\n            for c in range(right,left-1,-1): result.append(matrix[bottom][c])\n            bottom-=1\n        if left<=right:\n            for r in range(bottom,top-1,-1): result.append(matrix[r][left])\n            left+=1\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              1,
+              2,
+              3
+            ],
+            [
+              4,
+              5,
+              6
+            ],
+            [
+              7,
+              8,
+              9
+            ]
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          3,
+          6,
+          9,
+          8,
+          7,
+          4,
+          5
+        ]
+      },
+      {
+        "input": [
+          [
+            [
+              1,
+              2,
+              3
+            ]
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "rotate-image",
+    "title": "Rotate Image",
+    "track": "python",
+    "pattern": "Matrices",
+    "difficulty": "Medium",
+    "args": "matrix",
+    "prompt": "Rotate an n by n matrix 90 degrees clockwise and return it.",
+    "idea": "Transpose across the main diagonal, then reverse each row.",
+    "steps": [
+      "[[1,2],[3,4]] transposes to [[1,3],[2,4]].",
+      "Reversing rows yields [[3,1],[4,2]].",
+      "Swap only above the diagonal to avoid undoing each swap."
+    ],
+    "complexity": "O(n²) time · O(1) extra space",
+    "solution": "def solve(matrix):\n    for r in range(len(matrix)):\n        for c in range(r+1,len(matrix)):\n            matrix[r][c],matrix[c][r]=matrix[c][r],matrix[r][c]\n    for row in matrix: row.reverse()\n    return matrix",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            2
+          ]
+        ]
+      },
+      {
+        "input": [
+          [
+            [
+              1
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1
+          ]
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "word-search",
+    "title": "Word Search",
+    "track": "python",
+    "pattern": "Backtracking",
+    "difficulty": "Medium",
+    "args": "board, word",
+    "prompt": "Return whether word can be traced through orthogonally adjacent cells, using each cell at most once per path. Empty word returns true.",
+    "idea": "Explore one matching character at a time and undo visited marks when returning.",
+    "steps": [
+      "Match the first character at each possible starting cell.",
+      "Mark that cell and search neighbors for the next character.",
+      "Backtrack by removing the mark so a different path can reuse the cell."
+    ],
+    "complexity": "O(rows × cols × 4^L) time · O(L) search space",
+    "solution": "def solve(board, word):\n    if not word: return True\n    if not board or not board[0]: return False\n    m,n=len(board),len(board[0]); seen=set()\n    def dfs(r,c,i):\n        if i==len(word): return True\n        if not (0<=r<m and 0<=c<n) or (r,c) in seen or board[r][c]!=word[i]: return False\n        seen.add((r,c))\n        found=any(dfs(x,y,i+1) for x,y in ((r+1,c),(r-1,c),(r,c+1),(r,c-1)))\n        seen.remove((r,c)); return found\n    return any(dfs(r,c,0) for r in range(m) for c in range(n))",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              "A",
+              "B"
+            ],
+            [
+              "C",
+              "D"
+            ]
+          ],
+          "ABD"
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          [
+            [
+              "A",
+              "B"
+            ]
+          ],
+          "ABA"
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          [],
+          ""
+        ],
+        "expected": true
+      }
+    ]
+  },
+  {
+    "id": "longest-substring-without-repeating-characters",
+    "title": "Longest Substring Without Repeating Characters",
+    "track": "python",
+    "pattern": "Sliding window",
+    "difficulty": "Medium",
+    "args": "s",
+    "prompt": "Return the length of the longest contiguous substring with no repeated characters.",
+    "idea": "Jump the left boundary past the last occurrence of a duplicate.",
+    "steps": [
+      "For abcabcbb, the window first grows to abc.",
+      "The next a moves left past the old a.",
+      "Never move left backward when an old duplicate is already outside the window."
+    ],
+    "complexity": "O(n) time · O(alphabet size) space",
+    "solution": "def solve(s):\n    last={}; left=best=0\n    for right,c in enumerate(s):\n        left=max(left,last.get(c,-1)+1)\n        last[c]=right; best=max(best,right-left+1)\n    return best",
+    "tests": [
+      {
+        "input": [
+          "abcabcbb"
+        ],
+        "expected": 3
+      },
+      {
+        "input": [
+          "bbbbb"
+        ],
+        "expected": 1
+      },
+      {
+        "input": [
+          ""
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "longest-repeating-character-replacement",
+    "title": "Longest Repeating Character Replacement",
+    "track": "python",
+    "pattern": "Sliding window",
+    "difficulty": "Medium",
+    "args": "s, k",
+    "prompt": "Return the longest substring that can become one repeated character by replacing at most k characters.",
+    "idea": "Window length minus its most frequent character count is the required replacements.",
+    "steps": [
+      "In AABABBA with k=1, AABA needs one replacement.",
+      "Grow the window and track its highest character frequency.",
+      "Shrink when its size minus the recorded maximum exceeds k."
+    ],
+    "complexity": "O(n) time · O(alphabet size) space",
+    "solution": "def solve(s, k):\n    counts={}; left=best=most=0\n    for right,c in enumerate(s):\n        counts[c]=counts.get(c,0)+1; most=max(most,counts[c])\n        while right-left+1-most>k:\n            counts[s[left]]-=1; left+=1\n        best=max(best,right-left+1)\n    return best",
+    "tests": [
+      {
+        "input": [
+          "AABABBA",
+          1
+        ],
+        "expected": 4
+      },
+      {
+        "input": [
+          "ABAB",
+          2
+        ],
+        "expected": 4
+      },
+      {
+        "input": [
+          "",
+          0
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "minimum-window-substring",
+    "title": "Minimum Window Substring",
+    "track": "python",
+    "pattern": "Sliding window",
+    "difficulty": "Hard",
+    "args": "s, t",
+    "prompt": "Return the shortest substring of s containing all characters of t, including multiplicities. Break equal-length ties by earliest start; return empty if impossible.",
+    "idea": "Expand until all required occurrences are covered, then shrink while coverage survives.",
+    "steps": [
+      "For ADOBECODEBANC and ABC, expand until A,B,C are present.",
+      "Shrink from the left while retaining all counts.",
+      "The final best window is BANC."
+    ],
+    "complexity": "O(len(s)+len(t)) time · O(alphabet size) space",
+    "solution": "def solve(s, t):\n    from collections import Counter\n    if not t: return ''\n    need=Counter(t); missing=len(t); left=0; best=(0,len(s)+1)\n    for right,c in enumerate(s):\n        if need[c]>0: missing-=1\n        need[c]-=1\n        while missing==0:\n            if right-left+1<best[1]-best[0]: best=(left,right+1)\n            need[s[left]]+=1\n            if need[s[left]]>0: missing+=1\n            left+=1\n    return s[best[0]:best[1]] if best[1]<=len(s) else ''",
+    "tests": [
+      {
+        "input": [
+          "ADOBECODEBANC",
+          "ABC"
+        ],
+        "expected": "BANC"
+      },
+      {
+        "input": [
+          "a",
+          "aa"
+        ],
+        "expected": ""
+      },
+      {
+        "input": [
+          "a",
+          ""
+        ],
+        "expected": ""
+      }
+    ]
+  },
+  {
+    "id": "valid-anagram",
+    "title": "Valid Anagram",
+    "track": "python",
+    "pattern": "Hash maps",
+    "difficulty": "Easy",
+    "args": "s, t",
+    "prompt": "Return whether two strings contain exactly the same character counts. Case and spaces are significant.",
+    "idea": "Matching lengths are insufficient; the frequency of each character must also match.",
+    "steps": [
+      "Count letters in anagram.",
+      "Count letters in nagaram.",
+      "Identical frequency maps prove the strings are anagrams."
+    ],
+    "complexity": "O(n+m) time · O(alphabet size) space",
+    "solution": "def solve(s, t):\n    from collections import Counter\n    return Counter(s)==Counter(t)",
+    "tests": [
+      {
+        "input": [
+          "anagram",
+          "nagaram"
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          "rat",
+          "car"
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          "",
+          ""
+        ],
+        "expected": true
+      }
+    ]
+  },
+  {
+    "id": "group-anagrams",
+    "title": "Group Anagrams",
+    "track": "python",
+    "pattern": "Hash maps",
+    "difficulty": "Medium",
+    "args": "words",
+    "prompt": "Group words sharing the same letters. Sort words inside each group, then sort the groups lexicographically.",
+    "idea": "A sorted string is a canonical key shared by all of its anagrams.",
+    "steps": [
+      "eat,tea,ate all map to aet.",
+      "Append words to a bucket with that key.",
+      "Sort the groups for deterministic output."
+    ],
+    "complexity": "O(N × L log L) grouping time plus output sorting · O(NL) space",
+    "solution": "def solve(words):\n    from collections import defaultdict\n    groups=defaultdict(list)\n    for w in words: groups[''.join(sorted(w))].append(w)\n    return sorted(sorted(group) for group in groups.values())",
+    "tests": [
+      {
+        "input": [
+          [
+            "eat",
+            "tea",
+            "tan",
+            "ate",
+            "nat",
+            "bat"
+          ]
+        ],
+        "expected": [
+          [
+            "ate",
+            "eat",
+            "tea"
+          ],
+          [
+            "bat"
+          ],
+          [
+            "nat",
+            "tan"
+          ]
+        ]
+      },
+      {
+        "input": [
+          [
+            ""
+          ]
+        ],
+        "expected": [
+          [
+            ""
+          ]
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "valid-parentheses",
+    "title": "Valid Parentheses",
+    "track": "python",
+    "pattern": "Stacks",
+    "difficulty": "Easy",
+    "args": "s",
+    "prompt": "Return whether a string containing only ()[]{} is properly nested and balanced.",
+    "idea": "The most recently opened bracket must be the next one closed.",
+    "steps": [
+      "Push each opener.",
+      "For a closer, pop and compare with its matching opener.",
+      "Finish with an empty stack; premature closers fail immediately."
+    ],
+    "complexity": "O(n) time · O(n) space",
+    "solution": "def solve(s):\n    stack=[]; pairs={')':'(',']':'[','}':'{'}\n    for c in s:\n        if c in pairs:\n            if not stack or stack.pop()!=pairs[c]: return False\n        else: stack.append(c)\n    return not stack",
+    "tests": [
+      {
+        "input": [
+          "()[]{}"
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          "([)]"
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          ""
+        ],
+        "expected": true
+      }
+    ]
+  },
+  {
+    "id": "valid-palindrome",
+    "title": "Valid Palindrome",
+    "track": "python",
+    "pattern": "Two pointers",
+    "difficulty": "Easy",
+    "args": "s",
+    "prompt": "Ignore non-alphanumeric characters and case; return whether the remaining string is a palindrome.",
+    "idea": "Compare characters from opposite ends after normalization.",
+    "steps": [
+      "A man, a plan, a canal: Panama becomes amanaplanacanalpanama.",
+      "Compare first and last characters, then move inward.",
+      "Any mismatch disproves the palindrome."
+    ],
+    "complexity": "O(n) time · O(n) normalization space",
+    "solution": "def solve(s):\n    clean=''.join(c.lower() for c in s if c.isalnum())\n    return clean==clean[::-1]",
+    "tests": [
+      {
+        "input": [
+          "A man, a plan, a canal: Panama"
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          "race a car"
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          ".,"
+        ],
+        "expected": true
+      }
+    ]
+  },
+  {
+    "id": "longest-palindromic-substring",
+    "title": "Longest Palindromic Substring",
+    "track": "python",
+    "pattern": "Strings",
+    "difficulty": "Medium",
+    "args": "s",
+    "prompt": "Return the longest palindromic substring. Break ties by earliest start.",
+    "idea": "Every palindrome grows around a single character or a gap between characters.",
+    "steps": [
+      "For babad, expand around each character and gap.",
+      "The first length-3 palindrome is bab.",
+      "Replace the best only for strictly longer palindromes to preserve earliest ties."
+    ],
+    "complexity": "O(n²) time · O(1) extra space excluding returned string",
+    "solution": "def solve(s):\n    start=length=0\n    for center in range(len(s)):\n        for l,r in ((center,center),(center,center+1)):\n            while l>=0 and r<len(s) and s[l]==s[r]:\n                if r-l+1>length: start,length=l,r-l+1\n                l-=1; r+=1\n    return s[start:start+length]",
+    "tests": [
+      {
+        "input": [
+          "babad"
+        ],
+        "expected": "bab"
+      },
+      {
+        "input": [
+          "cbbd"
+        ],
+        "expected": "bb"
+      },
+      {
+        "input": [
+          ""
+        ],
+        "expected": ""
+      }
+    ]
+  },
+  {
+    "id": "palindromic-substrings",
+    "title": "Palindromic Substrings",
+    "track": "python",
+    "pattern": "Strings",
+    "difficulty": "Medium",
+    "args": "s",
+    "prompt": "Count palindromic substrings by position, including single characters.",
+    "idea": "Count every successful expansion around all odd and even centers.",
+    "steps": [
+      "aaa has three one-character palindromes.",
+      "Its two adjacent aa ranges add two.",
+      "The full aaa adds one, giving 6."
+    ],
+    "complexity": "O(n²) time · O(1) space",
+    "solution": "def solve(s):\n    count=0\n    for center in range(len(s)):\n        for l,r in ((center,center),(center,center+1)):\n            while l>=0 and r<len(s) and s[l]==s[r]:\n                count+=1; l-=1; r+=1\n    return count",
+    "tests": [
+      {
+        "input": [
+          "aaa"
+        ],
+        "expected": 6
+      },
+      {
+        "input": [
+          "abc"
+        ],
+        "expected": 3
+      },
+      {
+        "input": [
+          ""
+        ],
+        "expected": 0
+      }
+    ]
+  },
+  {
+    "id": "encode-and-decode-strings",
+    "title": "Encode and Decode Strings",
+    "track": "python",
+    "pattern": "Strings",
+    "difficulty": "Medium",
+    "args": "words",
+    "prompt": "Return the original list after encoding to one string and decoding. Your codec must preserve empty strings, delimiters, digits and Unicode.",
+    "idea": "Prefix each string with its length and a separator; length makes embedded separators harmless.",
+    "steps": [
+      "[hi,a#b] encodes as 2#hi3#a#b.",
+      "Read digits up to # to get the next length.",
+      "Consume exactly that many characters and repeat."
+    ],
+    "complexity": "O(total characters) time · O(total characters) space",
+    "solution": "def solve(words):\n    encoded=''.join(str(len(w))+'#'+w for w in words)\n    result=[]; i=0\n    while i<len(encoded):\n        j=encoded.index('#',i); size=int(encoded[i:j]); i=j+1\n        result.append(encoded[i:i+size]); i+=size\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            "hi",
+            "a#b",
+            ""
+          ]
+        ],
+        "expected": [
+          "hi",
+          "a#b",
+          ""
+        ]
+      },
+      {
+        "input": [
+          [
+            "😀",
+            "12#x"
+          ]
+        ],
+        "expected": [
+          "😀",
+          "12#x"
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "maximum-depth-of-binary-tree",
+    "title": "Maximum Depth of Binary Tree",
+    "track": "python",
+    "pattern": "Trees",
+    "difficulty": "Easy",
+    "args": "values",
+    "prompt": "Return the number of nodes on the longest root-to-leaf path. Trees use compact level-order arrays with null for missing nodes; only real nodes consume child slots. Nodes in solutions are [value,left,right].",
+    "idea": "A node adds one to the larger depth of its children.",
+    "steps": [
+      "An empty child has depth 0.",
+      "A leaf has depth 1.",
+      "Propagate maximum depths upward."
+    ],
+    "complexity": "O(n) time · O(n) adapter space; O(h) recursion space",
+    "solution": "def build(values):\n    from collections import deque\n    if not values or values[0] is None: return None\n    root=[values[0],None,None]; queue=deque([root]); i=1\n    while queue and i<len(values):\n        node=queue.popleft()\n        for side in (1,2):\n            if i<len(values) and values[i] is not None:\n                node[side]=[values[i],None,None]; queue.append(node[side])\n            i+=1\n    return root\n\ndef solve(values):\n    def depth(node): return 0 if node is None else 1+max(depth(node[1]),depth(node[2]))\n    return depth(build(values))",
+    "tests": [
+      {
+        "input": [
+          [
+            3,
+            9,
+            20,
+            null,
+            null,
+            15,
+            7
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": 0
+      },
+      {
+        "input": [
+          [
+            1
+          ]
+        ],
+        "expected": 1
+      }
+    ]
+  },
+  {
+    "id": "same-tree",
+    "title": "Same Tree",
+    "track": "python",
+    "pattern": "Trees",
+    "difficulty": "Easy",
+    "args": "a, b",
+    "prompt": "Return whether two trees have identical shape and values. Trees use compact level-order arrays with null for missing nodes; only real nodes consume child slots. Nodes in solutions are [value,left,right].",
+    "idea": "Both values and both child pairs must match recursively.",
+    "steps": [
+      "Two empty children match.",
+      "One empty and one nonempty child do not.",
+      "Otherwise compare values, then left and right subtrees."
+    ],
+    "complexity": "O(n+m) time · O(n+m) adapter space",
+    "solution": "def build(values):\n    from collections import deque\n    if not values or values[0] is None: return None\n    root=[values[0],None,None]; queue=deque([root]); i=1\n    while queue and i<len(values):\n        node=queue.popleft()\n        for side in (1,2):\n            if i<len(values) and values[i] is not None:\n                node[side]=[values[i],None,None]; queue.append(node[side])\n            i+=1\n    return root\n\ndef solve(a, b):\n    def same(x,y):\n        if x is None or y is None: return x is y\n        return x[0]==y[0] and same(x[1],y[1]) and same(x[2],y[2])\n    return same(build(a),build(b))",
+    "tests": [
+      {
+        "input": [
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          [
+            1,
+            2
+          ],
+          [
+            1,
+            null,
+            2
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          [],
+          []
+        ],
+        "expected": true
+      }
+    ]
+  },
+  {
+    "id": "invert-binary-tree",
+    "title": "Invert Binary Tree",
+    "track": "python",
+    "pattern": "Trees",
+    "difficulty": "Easy",
+    "args": "values",
+    "prompt": "Swap left and right children at every node and return level-order output without trailing nulls. Trees use compact level-order arrays with null for missing nodes; only real nodes consume child slots. Nodes in solutions are [value,left,right].",
+    "idea": "Invert each child, then exchange the two child pointers.",
+    "steps": [
+      "At root 4, exchange subtrees rooted at 2 and 7.",
+      "Do the same recursively inside each subtree.",
+      "Serialize the mirrored tree."
+    ],
+    "complexity": "O(n) time · O(n) adapter/output space",
+    "solution": "def build(values):\n    from collections import deque\n    if not values or values[0] is None: return None\n    root=[values[0],None,None]; queue=deque([root]); i=1\n    while queue and i<len(values):\n        node=queue.popleft()\n        for side in (1,2):\n            if i<len(values) and values[i] is not None:\n                node[side]=[values[i],None,None]; queue.append(node[side])\n            i+=1\n    return root\n\ndef serial(root):\n    from collections import deque\n    if not root: return []\n    result=[]; queue=deque([root])\n    while queue:\n        node=queue.popleft()\n        result.append(node[0] if node else None)\n        if node: queue.extend(node[1:])\n    while result and result[-1] is None: result.pop()\n    return result\n\ndef solve(values):\n    def invert(node):\n        if node: node[1],node[2]=invert(node[2]),invert(node[1])\n        return node\n    return serial(invert(build(values)))",
+    "tests": [
+      {
+        "input": [
+          [
+            4,
+            2,
+            7,
+            1,
+            3,
+            6,
+            9
+          ]
+        ],
+        "expected": [
+          4,
+          7,
+          2,
+          9,
+          6,
+          3,
+          1
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "input": [
+          [
+            1,
+            2
+          ]
+        ],
+        "expected": [
+          1,
+          null,
+          2
+        ]
+      }
+    ]
+  },
+  {
+    "id": "binary-tree-maximum-path-sum",
+    "title": "Binary Tree Maximum Path Sum",
+    "track": "python",
+    "pattern": "Trees",
+    "difficulty": "Hard",
+    "args": "values",
+    "prompt": "Return the largest sum on a nonempty path in a nonempty tree. Paths may start and end anywhere. Trees use compact level-order arrays with null for missing nodes; only real nodes consume child slots. Nodes in solutions are [value,left,right].",
+    "idea": "A parent can extend only one child branch, but a complete path may join both branches through the node.",
+    "steps": [
+      "Compute each child’s best downward gain.",
+      "Discard negative child gains.",
+      "Update the global best with node plus both gains; return node plus only the larger gain."
+    ],
+    "complexity": "O(n) time · O(n) adapter space; O(h) recursion space",
+    "solution": "def build(values):\n    from collections import deque\n    if not values or values[0] is None: return None\n    root=[values[0],None,None]; queue=deque([root]); i=1\n    while queue and i<len(values):\n        node=queue.popleft()\n        for side in (1,2):\n            if i<len(values) and values[i] is not None:\n                node[side]=[values[i],None,None]; queue.append(node[side])\n            i+=1\n    return root\n\ndef solve(values):\n    best=float('-inf')\n    def gain(node):\n        nonlocal best\n        if node is None: return 0\n        left=max(0,gain(node[1])); right=max(0,gain(node[2]))\n        best=max(best,node[0]+left+right)\n        return node[0]+max(left,right)\n    gain(build(values)); return best",
+    "tests": [
+      {
+        "input": [
+          [
+            -10,
+            9,
+            20,
+            null,
+            null,
+            15,
+            7
+          ]
+        ],
+        "expected": 42
+      },
+      {
+        "input": [
+          [
+            -3
+          ]
+        ],
+        "expected": -3
+      },
+      {
+        "input": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "expected": 6
+      }
+    ]
+  },
+  {
+    "id": "binary-tree-level-order-traversal",
+    "title": "Binary Tree Level Order Traversal",
+    "track": "python",
+    "pattern": "Trees",
+    "difficulty": "Medium",
+    "args": "values",
+    "prompt": "Return node values grouped by depth, left to right. Trees use compact level-order arrays with null for missing nodes; only real nodes consume child slots. Nodes in solutions are [value,left,right].",
+    "idea": "A queue processes one entire level before the next.",
+    "steps": [
+      "Queue the root.",
+      "Consume the current queue length into one output row.",
+      "Enqueue its children for the following row."
+    ],
+    "complexity": "O(n) time · O(n) space",
+    "solution": "def build(values):\n    from collections import deque\n    if not values or values[0] is None: return None\n    root=[values[0],None,None]; queue=deque([root]); i=1\n    while queue and i<len(values):\n        node=queue.popleft()\n        for side in (1,2):\n            if i<len(values) and values[i] is not None:\n                node[side]=[values[i],None,None]; queue.append(node[side])\n            i+=1\n    return root\n\ndef solve(values):\n    from collections import deque\n    root=build(values); queue=deque([root] if root else []); result=[]\n    while queue:\n        row=[]\n        for _ in range(len(queue)):\n            node=queue.popleft(); row.append(node[0])\n            queue.extend(c for c in node[1:] if c is not None)\n        result.append(row)\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            3,
+            9,
+            20,
+            null,
+            null,
+            15,
+            7
+          ]
+        ],
+        "expected": [
+          [
+            3
+          ],
+          [
+            9,
+            20
+          ],
+          [
+            15,
+            7
+          ]
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "input": [
+          [
+            1
+          ]
+        ],
+        "expected": [
+          [
+            1
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "serialize-and-deserialize-binary-tree",
+    "title": "Serialize and Deserialize Binary Tree",
+    "track": "python",
+    "pattern": "Trees",
+    "difficulty": "Hard",
+    "args": "values",
+    "prompt": "Serialize a tree into a string, reconstruct it, then return canonical level order. Trees use compact level-order arrays with null for missing nodes; only real nodes consume child slots. Nodes in solutions are [value,left,right].",
+    "idea": "A traversal that includes null markers preserves structure; JSON can encode the canonical traversal safely.",
+    "steps": [
+      "Convert the tree to level order, retaining internal null markers.",
+      "Encode the traversal as JSON.",
+      "Decode, rebuild the tree, and verify the same canonical shape."
+    ],
+    "complexity": "O(n) time · O(n) space",
+    "solution": "def build(values):\n    from collections import deque\n    if not values or values[0] is None: return None\n    root=[values[0],None,None]; queue=deque([root]); i=1\n    while queue and i<len(values):\n        node=queue.popleft()\n        for side in (1,2):\n            if i<len(values) and values[i] is not None:\n                node[side]=[values[i],None,None]; queue.append(node[side])\n            i+=1\n    return root\n\ndef serial(root):\n    from collections import deque\n    if not root: return []\n    result=[]; queue=deque([root])\n    while queue:\n        node=queue.popleft()\n        result.append(node[0] if node else None)\n        if node: queue.extend(node[1:])\n    while result and result[-1] is None: result.pop()\n    return result\n\ndef solve(values):\n    import json\n    encoded=json.dumps(serial(build(values)))\n    restored=build(json.loads(encoded))\n    return serial(restored)",
+    "tests": [
+      {
+        "input": [
+          [
+            1,
+            2,
+            3,
+            null,
+            null,
+            4,
+            5
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          3,
+          null,
+          null,
+          4,
+          5
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "input": [
+          [
+            1,
+            null,
+            2,
+            3
+          ]
+        ],
+        "expected": [
+          1,
+          null,
+          2,
+          3
+        ]
+      }
+    ]
+  },
+  {
+    "id": "subtree-of-another-tree",
+    "title": "Subtree of Another Tree",
+    "track": "python",
+    "pattern": "Trees",
+    "difficulty": "Easy",
+    "args": "values, sub",
+    "prompt": "Return whether sub occurs as a complete subtree. Empty sub is a subtree of any tree. Trees use compact level-order arrays with null for missing nodes; only real nodes consume child slots. Nodes in solutions are [value,left,right].",
+    "idea": "At each node, either the whole subtree matches or the match lies below it.",
+    "steps": [
+      "Compare current roots and shapes.",
+      "If they differ, search both child roots.",
+      "An empty candidate always succeeds."
+    ],
+    "complexity": "O(nm) worst-case time · O(n+m) adapter space",
+    "solution": "def build(values):\n    from collections import deque\n    if not values or values[0] is None: return None\n    root=[values[0],None,None]; queue=deque([root]); i=1\n    while queue and i<len(values):\n        node=queue.popleft()\n        for side in (1,2):\n            if i<len(values) and values[i] is not None:\n                node[side]=[values[i],None,None]; queue.append(node[side])\n            i+=1\n    return root\n\ndef solve(values, sub):\n    def same(a,b):\n        if a is None or b is None: return a is b\n        return a[0]==b[0] and same(a[1],b[1]) and same(a[2],b[2])\n    def search(a,b):\n        if b is None: return True\n        return a is not None and (same(a,b) or search(a[1],b) or search(a[2],b))\n    return search(build(values),build(sub))",
+    "tests": [
+      {
+        "input": [
+          [
+            3,
+            4,
+            5,
+            1,
+            2
+          ],
+          [
+            4,
+            1,
+            2
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          [
+            3,
+            4,
+            5,
+            1,
+            2,
+            null,
+            null,
+            null,
+            null,
+            0
+          ],
+          [
+            4,
+            1,
+            2
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          [
+            1
+          ],
+          []
+        ],
+        "expected": true
+      }
+    ]
+  },
+  {
+    "id": "construct-binary-tree-from-traversals",
+    "title": "Construct Binary Tree from Traversals",
+    "track": "python",
+    "pattern": "Trees",
+    "difficulty": "Medium",
+    "args": "preorder, inorder",
+    "prompt": "Build a tree from preorder and inorder arrays of unique values. Return canonical level order. Trees use compact level-order arrays with null for missing nodes; only real nodes consume child slots. Nodes in solutions are [value,left,right].",
+    "idea": "Preorder chooses the root; its inorder position separates left and right subtrees.",
+    "steps": [
+      "Take the next preorder value as root.",
+      "Look up its inorder index.",
+      "Build the left interval first, then the right, without slicing."
+    ],
+    "complexity": "O(n) time · O(n) space",
+    "solution": "def build(values):\n    from collections import deque\n    if not values or values[0] is None: return None\n    root=[values[0],None,None]; queue=deque([root]); i=1\n    while queue and i<len(values):\n        node=queue.popleft()\n        for side in (1,2):\n            if i<len(values) and values[i] is not None:\n                node[side]=[values[i],None,None]; queue.append(node[side])\n            i+=1\n    return root\n\ndef serial(root):\n    from collections import deque\n    if not root: return []\n    result=[]; queue=deque([root])\n    while queue:\n        node=queue.popleft()\n        result.append(node[0] if node else None)\n        if node: queue.extend(node[1:])\n    while result and result[-1] is None: result.pop()\n    return result\n\ndef solve(preorder, inorder):\n    positions={v:i for i,v in enumerate(inorder)}; cursor=0\n    def visit(left,right):\n        nonlocal cursor\n        if left>right: return None\n        value=preorder[cursor]; cursor+=1; mid=positions[value]\n        return [value,visit(left,mid-1),visit(mid+1,right)]\n    return serial(visit(0,len(inorder)-1))",
+    "tests": [
+      {
+        "input": [
+          [
+            3,
+            9,
+            20,
+            15,
+            7
+          ],
+          [
+            9,
+            3,
+            15,
+            20,
+            7
+          ]
+        ],
+        "expected": [
+          3,
+          9,
+          20,
+          null,
+          null,
+          15,
+          7
+        ]
+      },
+      {
+        "input": [
+          [],
+          []
+        ],
+        "expected": []
+      },
+      {
+        "input": [
+          [
+            1
+          ],
+          [
+            1
+          ]
+        ],
+        "expected": [
+          1
+        ]
+      }
+    ]
+  },
+  {
+    "id": "validate-binary-search-tree",
+    "title": "Validate Binary Search Tree",
+    "track": "python",
+    "pattern": "Trees",
+    "difficulty": "Medium",
+    "args": "values",
+    "prompt": "Return whether every node satisfies strict BST ordering. Duplicate values are invalid. Trees use compact level-order arrays with null for missing nodes; only real nodes consume child slots. Nodes in solutions are [value,left,right].",
+    "idea": "Each node must satisfy bounds inherited from all its ancestors, not only its parent.",
+    "steps": [
+      "Start with unbounded limits.",
+      "A left child inherits a tighter upper bound.",
+      "A right child inherits a tighter lower bound; reject equality."
+    ],
+    "complexity": "O(n) time · O(n) adapter space; O(h) recursion space",
+    "solution": "def build(values):\n    from collections import deque\n    if not values or values[0] is None: return None\n    root=[values[0],None,None]; queue=deque([root]); i=1\n    while queue and i<len(values):\n        node=queue.popleft()\n        for side in (1,2):\n            if i<len(values) and values[i] is not None:\n                node[side]=[values[i],None,None]; queue.append(node[side])\n            i+=1\n    return root\n\ndef solve(values):\n    def valid(node,lo,hi):\n        if node is None: return True\n        return lo<node[0]<hi and valid(node[1],lo,node[0]) and valid(node[2],node[0],hi)\n    return valid(build(values),float('-inf'),float('inf'))",
+    "tests": [
+      {
+        "input": [
+          [
+            2,
+            1,
+            3
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "input": [
+          [
+            5,
+            1,
+            4,
+            null,
+            null,
+            3,
+            6
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "input": [
+          [
+            2,
+            2,
+            3
+          ]
+        ],
+        "expected": false
+      }
+    ]
+  },
+  {
+    "id": "kth-smallest-element-in-a-bst",
+    "title": "Kth Smallest Element in a BST",
+    "track": "python",
+    "pattern": "Trees",
+    "difficulty": "Medium",
+    "args": "values, k",
+    "prompt": "Return the kth smallest value in a nonempty valid BST. k is 1-based and within size. Trees use compact level-order arrays with null for missing nodes; only real nodes consume child slots. Nodes in solutions are [value,left,right].",
+    "idea": "Inorder traversal visits a BST in sorted order.",
+    "steps": [
+      "Push the chain of left children.",
+      "Pop the next-smallest node and decrement k.",
+      "When k reaches 0, return; otherwise traverse its right child."
+    ],
+    "complexity": "O(n) worst-case time · O(n) adapter space; O(h) traversal space",
+    "solution": "def build(values):\n    from collections import deque\n    if not values or values[0] is None: return None\n    root=[values[0],None,None]; queue=deque([root]); i=1\n    while queue and i<len(values):\n        node=queue.popleft()\n        for side in (1,2):\n            if i<len(values) and values[i] is not None:\n                node[side]=[values[i],None,None]; queue.append(node[side])\n            i+=1\n    return root\n\ndef solve(values, k):\n    node=build(values); stack=[]\n    while node is not None or stack:\n        while node is not None: stack.append(node); node=node[1]\n        node=stack.pop(); k-=1\n        if k==0: return node[0]\n        node=node[2]",
+    "tests": [
+      {
+        "input": [
+          [
+            3,
+            1,
+            4,
+            null,
+            2
+          ],
+          1
+        ],
+        "expected": 1
+      },
+      {
+        "input": [
+          [
+            5,
+            3,
+            6,
+            2,
+            4,
+            null,
+            null,
+            1
+          ],
+          3
+        ],
+        "expected": 3
+      },
+      {
+        "input": [
+          [
+            1
+          ],
+          1
+        ],
+        "expected": 1
+      }
+    ]
+  },
+  {
+    "id": "lowest-common-ancestor-of-a-bst",
+    "title": "Lowest Common Ancestor of a BST",
+    "track": "python",
+    "pattern": "Trees",
+    "difficulty": "Medium",
+    "args": "values, p, q",
+    "prompt": "Return the value of the lowest node that is ancestor of both existing values p and q in a unique-valued BST. A node is its own ancestor. Trees use compact level-order arrays with null for missing nodes; only real nodes consume child slots. Nodes in solutions are [value,left,right].",
+    "idea": "If both targets lie on one side, descend there; a split marks the answer.",
+    "steps": [
+      "Both smaller: go left.",
+      "Both larger: go right.",
+      "Otherwise this node separates or equals the targets."
+    ],
+    "complexity": "O(h) search time · O(n) adapter space",
+    "solution": "def build(values):\n    from collections import deque\n    if not values or values[0] is None: return None\n    root=[values[0],None,None]; queue=deque([root]); i=1\n    while queue and i<len(values):\n        node=queue.popleft()\n        for side in (1,2):\n            if i<len(values) and values[i] is not None:\n                node[side]=[values[i],None,None]; queue.append(node[side])\n            i+=1\n    return root\n\ndef solve(values, p, q):\n    node=build(values)\n    while node:\n        if max(p,q)<node[0]: node=node[1]\n        elif min(p,q)>node[0]: node=node[2]\n        else: return node[0]",
+    "tests": [
+      {
+        "input": [
+          [
+            6,
+            2,
+            8,
+            0,
+            4,
+            7,
+            9,
+            null,
+            null,
+            3,
+            5
+          ],
+          2,
+          8
+        ],
+        "expected": 6
+      },
+      {
+        "input": [
+          [
+            6,
+            2,
+            8,
+            0,
+            4,
+            7,
+            9,
+            null,
+            null,
+            3,
+            5
+          ],
+          2,
+          4
+        ],
+        "expected": 2
+      },
+      {
+        "input": [
+          [
+            1
+          ],
+          1,
+          1
+        ],
+        "expected": 1
+      }
+    ]
+  },
+  {
+    "id": "implement-trie",
+    "title": "Implement Trie",
+    "track": "python",
+    "pattern": "Tries",
+    "difficulty": "Medium",
+    "args": "operations",
+    "prompt": "Process [operation,word] pairs. insert returns null; search checks a complete word; startsWith checks a prefix. Return one result per operation.",
+    "idea": "Nested dictionaries share prefix storage; a special end marker distinguishes words from prefixes.",
+    "steps": [
+      "Insert apple by walking or creating each character.",
+      "Mark the final node as a complete word.",
+      "search(app) fails while startsWith(app) succeeds until app is inserted."
+    ],
+    "complexity": "O(total characters) time · O(total inserted characters) space",
+    "solution": "def solve(operations):\n    root={}; result=[]\n    for op,word in operations:\n        node=root\n        if op=='insert':\n            for c in word: node=node.setdefault(c,{})\n            node['$']=True; result.append(None)\n        else:\n            for c in word:\n                if c not in node: node=None; break\n                node=node[c]\n            result.append(node is not None and (op=='startsWith' or '$' in node))\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              "insert",
+              "apple"
+            ],
+            [
+              "search",
+              "apple"
+            ],
+            [
+              "search",
+              "app"
+            ],
+            [
+              "startsWith",
+              "app"
+            ]
+          ]
+        ],
+        "expected": [
+          null,
+          true,
+          false,
+          true
+        ]
+      },
+      {
+        "input": [
+          [
+            [
+              "insert",
+              ""
+            ],
+            [
+              "search",
+              ""
+            ]
+          ]
+        ],
+        "expected": [
+          null,
+          true
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "add-and-search-word",
+    "title": "Add and Search Word",
+    "track": "python",
+    "pattern": "Tries",
+    "difficulty": "Medium",
+    "args": "operations",
+    "prompt": "Process [add,word] and [search,pattern] pairs. A dot matches exactly one arbitrary character. Return null for add and boolean for search. Lowercase letters only, except dots in patterns.",
+    "idea": "A trie follows literal characters directly and branches only for wildcard dots.",
+    "steps": [
+      "Insert bad,dad,mad.",
+      "For .ad, branch over first-character children.",
+      "A match succeeds only at an end-of-word marker."
+    ],
+    "complexity": "Add O(L); search O(26^L) worst case · O(total inserted characters) space",
+    "solution": "def solve(operations):\n    root={}; result=[]\n    def search(node,word,i):\n        if i==len(word): return '$' in node\n        c=word[i]\n        if c=='.': return any(search(v,word,i+1) for k,v in node.items() if k!='$')\n        return c in node and search(node[c],word,i+1)\n    for op,word in operations:\n        if op=='add':\n            node=root\n            for c in word: node=node.setdefault(c,{})\n            node['$']=True; result.append(None)\n        else: result.append(search(root,word,0))\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              "add",
+              "bad"
+            ],
+            [
+              "add",
+              "dad"
+            ],
+            [
+              "search",
+              ".ad"
+            ],
+            [
+              "search",
+              "b.."
+            ],
+            [
+              "search",
+              "pad"
+            ]
+          ]
+        ],
+        "expected": [
+          null,
+          null,
+          true,
+          true,
+          false
+        ]
+      },
+      {
+        "input": [
+          [
+            [
+              "add",
+              "a"
+            ],
+            [
+              "search",
+              ".."
+            ]
+          ]
+        ],
+        "expected": [
+          null,
+          false
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "word-search-ii",
+    "title": "Word Search II",
+    "track": "python",
+    "pattern": "Tries",
+    "difficulty": "Hard",
+    "args": "board, words",
+    "prompt": "Return unique dictionary words traceable through orthogonal board neighbors, never reusing a cell in a word. Sort the output. Words are nonempty lowercase strings.",
+    "idea": "A trie prunes paths as soon as no dictionary word has that prefix.",
+    "steps": [
+      "Insert all dictionary words in one trie.",
+      "Start a DFS from each board cell, following trie edges.",
+      "Collect terminal words in a set, backtracking visited cells after each path."
+    ],
+    "complexity": "O(total word lengths + rows × cols × 4^L) time · O(trie size + L) space",
+    "solution": "def solve(board, words):\n    root={}; found=set(); seen=set()\n    for word in words:\n        node=root\n        for c in word: node=node.setdefault(c,{})\n        node['$']=word\n    m=len(board); n=len(board[0]) if m else 0\n    def dfs(r,c,node):\n        if not (0<=r<m and 0<=c<n) or (r,c) in seen or board[r][c] not in node: return\n        node=node[board[r][c]]\n        if '$' in node: found.add(node['$'])\n        seen.add((r,c))\n        for x,y in ((r+1,c),(r-1,c),(r,c+1),(r,c-1)): dfs(x,y,node)\n        seen.remove((r,c))\n    for r in range(m):\n        for c in range(n): dfs(r,c,root)\n    return sorted(found)",
+    "tests": [
+      {
+        "input": [
+          [
+            [
+              "a",
+              "b"
+            ],
+            [
+              "c",
+              "d"
+            ]
+          ],
+          [
+            "ab",
+            "ac",
+            "abcd",
+            "bd"
+          ]
+        ],
+        "expected": [
+          "ab",
+          "ac",
+          "bd"
+        ]
+      },
+      {
+        "input": [
+          [
+            [
+              "a"
+            ]
+          ],
+          [
+            "a",
+            "aa"
+          ]
+        ],
+        "expected": [
+          "a"
+        ]
+      },
+      {
+        "input": [
+          [],
+          [
+            "a"
+          ]
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "top-k-frequent-elements",
+    "title": "Top K Frequent Elements",
+    "track": "python",
+    "pattern": "Heaps",
+    "difficulty": "Medium",
+    "args": "nums, k",
+    "prompt": "Return k most frequent values ordered by decreasing frequency; ties use smaller numeric value first. 0 <= k <= unique count.",
+    "idea": "A size-k selection avoids sorting the entire input; define a deterministic tie rule.",
+    "steps": [
+      "Count each distinct number.",
+      "Select by descending count then ascending value.",
+      "For [1,1,1,2,2,3] and k=2, return [1,2]."
+    ],
+    "complexity": "O(n + u log k) time for u distinct values · O(u) space",
+    "solution": "def solve(nums, k):\n    import heapq\n    from collections import Counter\n    counts=Counter(nums)\n    return heapq.nsmallest(k,counts,key=lambda n:(-counts[n],n))",
+    "tests": [
+      {
+        "input": [
+          [
+            1,
+            1,
+            1,
+            2,
+            2,
+            3
+          ],
+          2
+        ],
+        "expected": [
+          1,
+          2
+        ]
+      },
+      {
+        "input": [
+          [
+            3,
+            2,
+            1
+          ],
+          2
+        ],
+        "expected": [
+          1,
+          2
+        ]
+      },
+      {
+        "input": [
+          [],
+          0
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "id": "find-median-from-data-stream",
+    "title": "Find Median from Data Stream",
+    "track": "python",
+    "pattern": "Heaps",
+    "difficulty": "Hard",
+    "args": "nums",
+    "prompt": "Insert numbers one by one and return the median after each insertion.",
+    "idea": "A max-heap holds the lower half and a min-heap holds the upper half.",
+    "steps": [
+      "Insert into lower, then move its maximum into upper.",
+      "Rebalance so lower has equal size or one extra item.",
+      "Read lower’s maximum for odd size, or average both roots for even size."
+    ],
+    "complexity": "O(n log n) total time · O(n) space",
+    "solution": "def solve(nums):\n    import heapq\n    lower=[]; upper=[]; result=[]\n    for n in nums:\n        heapq.heappush(lower,-n)\n        heapq.heappush(upper,-heapq.heappop(lower))\n        if len(upper)>len(lower): heapq.heappush(lower,-heapq.heappop(upper))\n        result.append(-lower[0] if len(lower)>len(upper) else (-lower[0]+upper[0])/2)\n    return result",
+    "tests": [
+      {
+        "input": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "expected": [
+          1,
+          1.5,
+          2
+        ]
+      },
+      {
+        "input": [
+          [
+            -1,
+            -2,
+            -3
+          ]
+        ],
+        "expected": [
+          -1,
+          -1.5,
+          -2
+        ]
+      },
+      {
+        "input": [
+          []
+        ],
+        "expected": []
+      }
+    ]
+  }
+]

@@ -14,6 +14,11 @@ import {
 
 const FEATURES = [
   {
+    icon: FileSearch,
+    title: "Coding practice: Python 75 & SQL",
+    body: "Build coding fluency with 75 curated algorithm problems and 40 SQL patterns. Study the key idea and a step-by-step walkthrough, reveal a reference solution, then write and run your own code against practice tests. Your drafts and progress stay saved on this browser.",
+  },
+  {
     icon: ScanSearch,
     title: "Evidence bank",
     body: "Before a single question is written, TopFit reads your resume and extracts the proof: the projects you shipped, the metrics you moved, the tools you used, and the scope you owned. Every answer in your pack is assembled from this bank. If a fact is not in your resume, it does not appear in your answers.",
