@@ -53,3 +53,10 @@ export const UNIVERSAL_RULES = `ANSWER RULES (non-negotiable):
 5. Gaps: where the requirement map marks a gap or partial, use the honest bridge: adjacent evidence plus a concrete ramp (what they have done that is close, and how they close the rest). Never claim the missing thing.
 6. Traps: the trap field names the specific way candidates lose this question (rambling, criticising an employer, naming a salary figure, bluffing depth, taking credit for team work without owning a part).
 7. Requirements coverage: across the 4 questions, cover as many must-have requirements as possible. provesRequirements must list the requirement ids each answer actually evidences.`;
+
+export const SCENARIO_RULES = `PREP PACK RULES (non-negotiable):
+1. Grounding: statements about the candidate use only the evidence bank. Never invent employers, projects, metrics, tools, certifications or outcomes. Scenarios and screens are illustrative teaching material and must read as hypothetical client situations, never as the candidate's past work.
+2. Spoken answers describe past employers generically ("a large US bank", "a university AI institute") and never name internal tools, codenames or confidential systems.
+3. Gaps are named honestly with adjacent evidence and a ramp; never claim a missing skill.
+4. Specific beats generic: numbers with units, named techniques, named alternatives. Plain English, short sentences, no buzzwords, no em dashes.
+5. Every technical claim must be correct for current industry practice.`;

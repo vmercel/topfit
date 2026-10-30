@@ -98,15 +98,63 @@ export interface CoreQuestion {
   followUps: FollowUp[];
 }
 
+export type Tone = "good" | "bad" | "warn" | "neutral";
+
+// An illustrative product screen, drawn by the app from structured data.
+export interface UiMock {
+  tool: string;
+  breadcrumb: string;
+  sidebar: { heading: string; lines: string[] }[];
+  kpis: { label: string; value: string; note: string; tone: Tone }[];
+  timeline: { title: string; spans: { name: string; start: number; duration: number; label: string; tone: Tone }[] } | null;
+  chart: {
+    title: string;
+    xLabels: string[];
+    series: { name: string; points: number[]; tone: Tone }[];
+    threshold: number | null;
+    thresholdLabel: string;
+  } | null;
+  graph: {
+    title: string;
+    nodes: { id: string; label: string; note: string; tone: Tone }[];
+    edges: { from: string; to: string; label: string }[];
+  } | null;
+  table: { title: string; columns: string[]; rows: { cells: string[]; tone: Tone }[] } | null;
+  code: { title: string; lines: string[] } | null;
+  callout: { tone: Tone; text: string } | null;
+}
+
+export interface FrameworkScenario {
+  name: string;
+  requirement: string;
+  scenario: string;
+  screen: UiMock;
+  howToRead: string;
+  whatToDo: string;
+  extraNote: string;
+  tradeoffs: { columns: string[]; rows: string[][] };
+}
+
 export interface PrepPack {
   headline: string;
   coverageNote: string;
   coveredCount: number;
   totalMustHaves: number;
   strategy: string[];
-  questions: CoreQuestion[];
+  // Legacy question-and-answer packs (built before framework scenarios).
+  questions?: CoreQuestion[];
   questionsToAsk: string[];
   closingLine: string;
+  // Framework-scenario packs.
+  snapshot?: { summary: string; rows: { label: string; value: string }[]; note: string };
+  pitch?: string;
+  storyMap?: { requirement: string; story: string; proof: string }[];
+  technicalQA?: { question: string; answer: string }[];
+  frameworks?: FrameworkScenario[];
+  behavioral?: { question: string; answer: string }[];
+  logistics?: string[];
+  gaps?: { gap: string; whatToSay: string }[];
+  checklist?: string[];
 }
 
 export interface PrepResult {

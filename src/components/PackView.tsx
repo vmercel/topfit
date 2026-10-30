@@ -18,6 +18,7 @@ import {
   Target,
 } from "lucide-react";
 import { STAGES, INTERVIEW_TYPES, type PrepResult } from "@/lib/types";
+import ScenarioPack from "./ScenarioPack";
 
 function secondsLabel(s: number) {
   return `~${s}s spoken`;
@@ -31,7 +32,43 @@ function toMarkdown(result: PrepResult): string {
   lines.push(`\nCoverage: ${pack.coveredCount} of ${pack.totalMustHaves} must-haves evidenced. ${pack.coverageNote}`);
   lines.push(`\n## Strategy`);
   pack.strategy.forEach((s) => lines.push(`- ${s}`));
-  pack.questions.forEach((q, i) => {
+  if (pack.snapshot) {
+    lines.push(`\n## Interview snapshot\n${pack.snapshot.summary}`);
+    pack.snapshot.rows.forEach((r) => lines.push(`- ${r.label}: ${r.value}`));
+    if (pack.snapshot.note) lines.push(pack.snapshot.note);
+  }
+  if (pack.pitch) lines.push(`\n## Your 60-second pitch\n${pack.pitch}`);
+  if (pack.storyMap?.length) {
+    lines.push(`\n## Your stories mapped to the JD`);
+    pack.storyMap.forEach((s) => lines.push(`- ${s.requirement}: ${s.story} (${s.proof})`));
+  }
+  if (pack.technicalQA?.length) {
+    lines.push(`\n## Technical questions with brief answers`);
+    pack.technicalQA.forEach((q, i) => lines.push(`\n**${i + 1}. ${q.question}**\n${q.answer}`));
+  }
+  (pack.frameworks ?? []).forEach((f, i) => {
+    lines.push(`\n## ${i + 1}. ${f.name}`);
+    lines.push(`JD: ${f.requirement}`);
+    lines.push(`\n**Scenario.** ${f.scenario}`);
+    lines.push(`\n**How to read the screen.** ${f.howToRead}`);
+    lines.push(`\n**What you do.** ${f.whatToDo}`);
+    if (f.extraNote) lines.push(`\n${f.extraNote}`);
+    lines.push(`\n| ${f.tradeoffs.columns.join(" | ")} |\n| ${f.tradeoffs.columns.map(() => "---").join(" | ")} |`);
+    f.tradeoffs.rows.forEach((r) => lines.push(`| ${r.join(" | ")} |`));
+  });
+  if (pack.behavioral?.length) {
+    lines.push(`\n## Behavioural questions`);
+    pack.behavioral.forEach((q) => lines.push(`\n**${q.question}**\n${q.answer}`));
+  }
+  if (pack.logistics?.length) {
+    lines.push(`\n## Logistics`);
+    pack.logistics.forEach((l) => lines.push(`- ${l}`));
+  }
+  if (pack.gaps?.length) {
+    lines.push(`\n## Gaps and how to handle them`);
+    pack.gaps.forEach((g) => lines.push(`- ${g.gap}: ${g.whatToSay}`));
+  }
+  (pack.questions ?? []).forEach((q, i) => {
     lines.push(`\n## Q${i + 1}. ${q.question}`);
     lines.push(`Why they ask: ${q.intent}`);
     lines.push(`\n**Answer** (${secondsLabel(q.seconds)}):\n${q.answer}`);
@@ -44,6 +81,10 @@ function toMarkdown(result: PrepResult): string {
   });
   lines.push(`\n## Questions to ask them`);
   pack.questionsToAsk.forEach((q) => lines.push(`- ${q}`));
+  if (pack.checklist?.length) {
+    lines.push(`\n## Day-of checklist`);
+    pack.checklist.forEach((c) => lines.push(`- [ ] ${c}`));
+  }
   lines.push(`\nClosing line: ${pack.closingLine}`);
   return lines.join("\n");
 }
@@ -323,7 +364,9 @@ export default function PackView({ result }: { result: PrepResult }) {
         </section>
       )}
 
-      {pack.questions.map((q, qi) => {
+      {pack.frameworks && <ScenarioPack pack={pack} practice={practice} />}
+
+      {(pack.frameworks ? [] : (pack.questions ?? [])).map((q, qi) => {
         const key = `q${qi}`;
         const answerShown = !practice || revealed[key];
         const fuOpen = openFollowUps[key] || practice;

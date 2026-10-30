@@ -28,13 +28,20 @@ import type {
 } from "@/lib/coding/types";
 import "./coding-practice.css";
 import SolutionDiagram from "./SolutionDiagram";
+import TraceDiagram from "./TraceDiagram";
 
 const lessons = [...pythonData, ...sqlData] as Lesson[];
 const storageKey = "topfit-coding-v1";
-const starter = (lesson: Lesson) =>
+// Every problem opens with its complete, tested implementation so the editor
+// is a working program from the start. "Blank" gives a clean slate to practise.
+const starter = (lesson: Lesson) => `${lesson.solution.trimEnd()}\n`;
+const blank = (lesson: Lesson) =>
   lesson.track === "python"
-    ? `def solve(${lesson.args}):\n    # Write your solution here.\n    pass\n`
-    : "-- Write your SQLite solution here.\n-- Use the schema and example below.\n";
+    ? `def solve(${lesson.args}):\n    \n`
+    : "-- Write your SQLite solution here.\n";
+const isOldPlaceholder = (code: string) =>
+  /#\s*Write your solution here\.\s*\n\s*pass\s*$/.test(code.trim()) ||
+  code.trim() === "-- Write your SQLite solution here.\n-- Use the schema and example below.".trim();
 type Saved = { drafts: Record<string, string>; solved: string[] };
 const emptySaved: Saved = { drafts: {}, solved: [] };
 function format(value: unknown) {
@@ -50,7 +57,6 @@ export default function CodingPractice() {
   const [saved, setSaved] = useState<Saved>(emptySaved);
   const [hydrated, setHydrated] = useState(false);
   const [storageError, setStorageError] = useState(false);
-  const [step, setStep] = useState(0);
   const [reveal, setReveal] = useState(false);
   const [mobilePane, setMobilePane] = useState<"theory" | "practice">("theory");
   const [status, setStatus] = useState<"idle" | "loading" | "running">("idle");
@@ -64,7 +70,8 @@ export default function CodingPractice() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const runId = useRef(0);
   const lesson = lessons.find((l) => l.id === selected) ?? lessons[0];
-  const code = saved.drafts[lesson.id] ?? starter(lesson);
+  const draft = saved.drafts[lesson.id];
+  const code = draft !== undefined && !isOldPlaceholder(draft) ? draft : starter(lesson);
   const trackLessons = lessons.filter((l) => l.track === track);
   const patterns = [...new Set(trackLessons.map((l) => l.pattern))];
   const filtered = trackLessons.filter(
@@ -140,7 +147,6 @@ export default function CodingPractice() {
   function choose(next: Lesson) {
     stop();
     setSelected(next.id);
-    setStep(0);
     setReveal(false);
     setResults([]);
     setError("");
@@ -435,47 +441,21 @@ export default function CodingPractice() {
               <div className="theory-body">
                 <p className="section-label">THE KEY IDEA</p>
                 <p className="key-idea">{lesson.idea}</p>
-                <SolutionDiagram lesson={lesson} />
+                {lesson.track === "python" && lesson.trace?.length ? (
+                  <TraceDiagram key={lesson.id} frames={lesson.trace} result={lesson.tests[0].expected} />
+                ) : (
+                  <SolutionDiagram lesson={lesson} />
+                )}
                 <div className="walkthrough">
                   <div className="walkthrough-head">
-                    <strong>Walk through the approach</strong>
-                    <span>
-                      {step + 1} / {lesson.steps.length}
-                    </span>
+                    <strong>The approach</strong>
+                    <span>{lesson.steps.length} moves</span>
                   </div>
-                  <div className="flow-steps" aria-label="Solution flow">
-                    {lesson.steps.map((_, i) => (
-                      <button
-                        key={i}
-                        className={
-                          i === step ? "current" : i < step ? "visited" : ""
-                        }
-                        onClick={() => setStep(i)}
-                        aria-label={`Walkthrough step ${i + 1}`}
-                        aria-current={i === step ? "step" : undefined}
-                      >
-                        {i < step ? <Check size={14} /> : i + 1}
-                      </button>
+                  <ol className="approach-list">
+                    {lesson.steps.map((s, i) => (
+                      <li key={i}>{s}</li>
                     ))}
-                  </div>
-                  <p aria-live="polite">{lesson.steps[step]}</p>
-                  <div className="walkthrough-controls">
-                    <button
-                      onClick={() => setStep((s) => s - 1)}
-                      disabled={step === 0}
-                      aria-label="Previous walkthrough step"
-                    >
-                      <ArrowLeft size={15} />
-                    </button>
-                    <span>Follow the reasoning</span>
-                    <button
-                      onClick={() => setStep((s) => s + 1)}
-                      disabled={step === lesson.steps.length - 1}
-                      aria-label="Next walkthrough step"
-                    >
-                      <ArrowRight size={15} />
-                    </button>
-                  </div>
+                  </ol>
                 </div>
                 <div className="complexity-note">
                   <p className="section-label">
@@ -564,15 +544,25 @@ export default function CodingPractice() {
                   onClick={() => {
                     if (
                       window.confirm(
-                        "Reset this draft to the starter? Your completed status will be kept.",
+                        "Restore the full working implementation? Your completed status will be kept.",
                       )
                     )
                       edit(starter(lesson));
                   }}
                   disabled={status !== "idle"}
-                  aria-label="Reset code"
+                  aria-label="Restore implementation"
                 >
-                  <RotateCcw size={14} /> Reset
+                  <RotateCcw size={14} /> Implementation
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm("Clear the editor to write it yourself from scratch?"))
+                      edit(blank(lesson));
+                  }}
+                  disabled={status !== "idle"}
+                  aria-label="Clear editor to practise from scratch"
+                >
+                  Blank
                 </button>
               </div>
               <div className="code-editor">

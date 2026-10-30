@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "TopFit: Interview Prep That Puts You in the Top 3 Percent",
   description:
-    "Add your resume and a job description. TopFit decodes the role, picks the 4 questions your interview stage is most likely to ask, engineers brief answers from your own experience, and predicts the follow-ups.",
+    "Add your resume and a job description. TopFit decodes the role and builds your briefing: pitch, stories mapped to the job, technical answers, and a scenario, screen and trade-offs for every framework the job names.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -12,7 +12,7 @@ const TIERS = [
     features: [
       "2 prep packs a month",
       "1 interview stage of your choice",
-      "4 engineered answers per pack",
+      "Pitch, story map and technical answers",
       "Requirement map and coverage score",
       "Packs saved to your dashboard",
     ],
@@ -27,7 +27,7 @@ const TIERS = [
     features: [
       "Unlimited prep packs",
       "All 6 stages and every format",
-      "Full follow-up chains, 3 per question",
+      "Framework scenarios with screens and trade-offs",
       "Practice mode with spoken-answer timers",
       "Priority generation at peak times",
       "Copy packs as Markdown",
@@ -53,7 +53,7 @@ const TIERS = [
 const COMPARE: { label: string; values: (string | boolean)[] }[] = [
   { label: "Prep packs", values: ["2 a month", "Unlimited", "Unlimited"] },
   { label: "Interview stages", values: ["1 stage", "All 6 stages", "All 6 stages"] },
-  { label: "Follow-up chains", values: [false, true, true] },
+  { label: "Framework scenarios", values: [true, true, true] },
   { label: "Practice mode and timers", values: [false, true, true] },
   { label: "Priority generation", values: [false, true, true] },
   { label: "Shared workspace", values: [false, false, true] },
@@ -68,7 +68,7 @@ const FAQS = [
   },
   {
     q: "What counts as one prep pack?",
-    a: "One pack is one interview: a resume, a job description, a stage, and a format. It includes the strategy, the requirement map, 4 engineered answers, and their follow-up chains. Regenerating for a different stage of the same job counts as a new pack.",
+    a: "One pack is one interview: a resume, a job description, a stage, and a format. It includes the strategy, the requirement map, your pitch and story map, technical answers, framework scenarios with screens and trade-offs, gaps and a day-of checklist. Regenerating for a different stage of the same job counts as a new pack.",
   },
   {
     q: "Can I prep for several stages of the same job?",

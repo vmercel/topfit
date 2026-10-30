@@ -72,6 +72,91 @@ export const ExpandedAnswerSchema = z.object({
   answer: z.string(),
 });
 
+// ---------- Framework-scenario packs ----------
+const Tone = z.enum(["good", "bad", "warn", "neutral"]);
+const QA = z.object({ question: z.string(), answer: z.string() });
+
+// Everything except the per-framework deep dives, plus the list of frameworks to cover.
+export const ScenarioCoreSchema = z.object({
+  headline: z.string(),
+  coverageNote: z.string(),
+  coveredCount: z.number(),
+  totalMustHaves: z.number(),
+  strategy: z.array(z.string()),
+  snapshot: z.object({
+    summary: z.string(),
+    rows: z.array(z.object({ label: z.string(), value: z.string() })),
+    note: z.string(),
+  }),
+  pitch: z.string(),
+  storyMap: z.array(z.object({ requirement: z.string(), story: z.string(), proof: z.string() })),
+  technicalQA: z.array(QA),
+  frameworkTopics: z.array(
+    z.object({
+      name: z.string(),
+      requirement: z.string(),
+      screenIdea: z.string(),
+    })
+  ),
+  behavioral: z.array(QA),
+  logistics: z.array(z.string()),
+  gaps: z.array(z.object({ gap: z.string(), whatToSay: z.string() })),
+  questionsToAsk: z.array(z.string()),
+  checklist: z.array(z.string()),
+  closingLine: z.string(),
+});
+
+export const UiMockSchema = z.object({
+  tool: z.string(),
+  breadcrumb: z.string(),
+  sidebar: z.array(z.object({ heading: z.string(), lines: z.array(z.string()) })),
+  kpis: z.array(z.object({ label: z.string(), value: z.string(), note: z.string(), tone: Tone })),
+  timeline: z
+    .object({
+      title: z.string(),
+      spans: z.array(
+        z.object({ name: z.string(), start: z.number(), duration: z.number(), label: z.string(), tone: Tone })
+      ),
+    })
+    .nullable(),
+  chart: z
+    .object({
+      title: z.string(),
+      xLabels: z.array(z.string()),
+      series: z.array(z.object({ name: z.string(), points: z.array(z.number()), tone: Tone })),
+      threshold: z.number().nullable(),
+      thresholdLabel: z.string(),
+    })
+    .nullable(),
+  graph: z
+    .object({
+      title: z.string(),
+      nodes: z.array(z.object({ id: z.string(), label: z.string(), note: z.string(), tone: Tone })),
+      edges: z.array(z.object({ from: z.string(), to: z.string(), label: z.string() })),
+    })
+    .nullable(),
+  table: z
+    .object({
+      title: z.string(),
+      columns: z.array(z.string()),
+      rows: z.array(z.object({ cells: z.array(z.string()), tone: Tone })),
+    })
+    .nullable(),
+  code: z.object({ title: z.string(), lines: z.array(z.string()) }).nullable(),
+  callout: z.object({ tone: Tone, text: z.string() }).nullable(),
+});
+
+export const FrameworkScenarioSchema = z.object({
+  name: z.string(),
+  requirement: z.string(),
+  scenario: z.string(),
+  screen: UiMockSchema,
+  howToRead: z.string(),
+  whatToDo: z.string(),
+  extraNote: z.string(),
+  tradeoffs: z.object({ columns: z.array(z.string()), rows: z.array(z.array(z.string())) }),
+});
+
 // Full pack schema (core + follow-ups), used as the stored shape.
 export const PackSchema = CorePackSchema.extend({
   questions: z.array(

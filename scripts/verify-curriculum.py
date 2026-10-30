@@ -11,7 +11,14 @@ assert len(python) == 75
 assert len(sql) == 40
 assert len({p['id'] for p in python+sql}) == 115
 checks = 0
+PANELS = {'array','grid','tree','graph','intervals','list','kv','stack','bits'}
 for lesson in python:
+    assert 'pass' not in lesson['solution'].split(), (lesson['title'], 'placeholder solution')
+    trace = lesson.get('trace') or []
+    assert len(trace) >= 2, (lesson['title'], 'missing step-by-step trace')
+    for frame in trace:
+        assert frame['note'].strip() and frame['panels'], (lesson['title'], frame)
+        assert all(p['type'] in PANELS for p in frame['panels']), (lesson['title'], frame)
     namespace = {}
     exec(lesson['solution'], namespace)
     assert len(lesson['tests']) >= 3

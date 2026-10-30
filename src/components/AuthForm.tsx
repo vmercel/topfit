@@ -21,13 +21,13 @@ import Logo, { LogoMark } from "./Logo";
 const PANEL_POINTS = [
   {
     icon: FileCheck2,
-    title: "4 engineered answers",
-    text: "Built from your own resume and matched to the job description.",
+    title: "Framework scenarios",
+    text: "A client scenario, screen and trade-offs for every framework in the job."
   },
   {
     icon: MessagesSquare,
-    title: "12 predicted follow-ups",
-    text: "The questions they ask next, with an answer ready for each one.",
+    title: "Technical answers",
+    text: "The questions they will ask, with brief answers from your own experience.",
   },
   {
     icon: LayoutDashboard,

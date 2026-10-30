@@ -1,8 +1,8 @@
 import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
-import { AnalysisSchema, CorePackSchema, ExpandedAnswerSchema, FollowUpsSchema } from "./schemas";
-import { STAGE_BRIEFS, TYPE_BRIEFS, UNIVERSAL_RULES } from "./knowledge";
-import type { Analysis, CoreQuestion, FollowUp, PrepPack } from "./types";
+import { AnalysisSchema, FrameworkScenarioSchema, ScenarioCoreSchema } from "./schemas";
+import { SCENARIO_RULES, STAGE_BRIEFS, TYPE_BRIEFS } from "./knowledge";
+import type { Analysis, FrameworkScenario, PrepPack } from "./types";
 
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o";
 
@@ -15,45 +15,6 @@ function openai() {
 interface Usage {
   promptTokens: number;
   completionTokens: number;
-}
-
-function wordCount(text: string): number {
-  return text.trim().split(/\s+/).length;
-}
-
-// Constraint repair: if a core answer comes back under the 90-word floor, one
-// expansion pass rewrites it at full length using only the same evidence.
-async function expandAnswer(
-  analysis: Analysis,
-  question: CoreQuestion
-): Promise<{ answer: string } & Usage> {
-  const client = openai();
-  const completion = await client.chat.completions.parse({
-    model: MODEL,
-    temperature: 0.4,
-    messages: [
-      {
-        role: "system",
-        content: `You rewrite interview answers to full length. Take the draft answer below and expand it to 110-130 words by adding the missing moves: more specific evidence from the evidence bank, one method or trade-off detail, and a clear tie-back to the role. Use ONLY facts from the evidence bank. Never invent metrics, tools, employers or outcomes. Keep the first person, confident and plain. Return only the rewritten answer text in the "answer" field.`,
-      },
-      {
-        role: "user",
-        content: `ROLE: ${analysis.roleTitle} at ${analysis.company}
-QUESTION: ${question.question}
-DRAFT ANSWER (${wordCount(question.answer)} words): ${question.answer}
-
-EVIDENCE BANK:
-${analysis.evidenceBank.map((e) => `- ${e.text}`).join("\n")}`,
-      },
-    ],
-    response_format: zodResponseFormat(ExpandedAnswerSchema, "expanded_answer"),
-  });
-  const parsed = completion.choices[0]?.message.parsed;
-  return {
-    answer: parsed?.answer || question.answer,
-    promptTokens: completion.usage?.prompt_tokens ?? 0,
-    completionTokens: completion.usage?.completion_tokens ?? 0,
-  };
 }
 
 export async function analyzeResumeAndJd(
@@ -86,133 +47,145 @@ export async function analyzeResumeAndJd(
   };
 }
 
-async function generateCorePack(
+function evidenceBlock(analysis: Analysis) {
+  return `CANDIDATE: ${analysis.candidateName}, ${analysis.currentTitle} (${analysis.yearsExperience})
+ROLE: ${analysis.roleTitle} at ${analysis.company} (${analysis.domain}, ${analysis.seniority})
+
+EVIDENCE BANK (the only facts you may use about the candidate):
+${analysis.evidenceBank.map((e) => `- [${e.id}] ${e.text}`).join("\n")}
+
+REQUIREMENTS:
+${analysis.requirements.map((r) => `- [${r.id}] (${r.kind}, ${r.match}) ${r.text} :: ${r.note}`).join("\n")}
+
+RISKS:
+${analysis.risks.map((r) => `- ${r.text} :: ${r.mitigation}`).join("\n")}`;
+}
+
+type ScenarioCore = Omit<PrepPack, "frameworks"> & {
+  frameworkTopics: { name: string; requirement: string; screenIdea: string }[];
+};
+
+async function generateScenarioCore(
   analysis: Analysis,
   jdText: string,
   stage: string,
   interviewType: string
-): Promise<{ core: Omit<PrepPack, "questions"> & { questions: CoreQuestion[] } } & Usage> {
+): Promise<{ core: ScenarioCore } & Usage> {
   const client = openai();
-  const stageBrief = STAGE_BRIEFS[stage] || "";
-  const typeBrief = TYPE_BRIEFS[interviewType] || "";
-
   const completion = await client.chat.completions.parse({
     model: MODEL,
-    temperature: 0.45,
+    temperature: 0.4,
     messages: [
       {
         role: "system",
-        content: `You are an elite interview coach. Your candidates land in the top 3 percent because their answers are brief, evidenced and built for the exact room they are walking into. You are given a decoded analysis (evidence bank + requirement map) of a candidate against a job description. Select the 4 highest-probability questions for the stage below and engineer one answer per question. At least 3 of the 4 must be derived from this JD's named skills, tools and responsibilities; at most 1 may be a generic classic (and only if the stage brief ranks it highest).
+        content: `You are an elite interview coach who builds a complete, ready-to-use prep pack for one specific interview. The pack reads like a senior engineer's private briefing: specific, scannable, honest.
 
-${stageBrief}
-${typeBrief}
+${STAGE_BRIEFS[stage] || ""}
+${TYPE_BRIEFS[interviewType] || ""}
 
-${UNIVERSAL_RULES}
+${SCENARIO_RULES}
 
-Additional fields: intent = what the interviewer is really deciding with this question, in one sentence. structure = 3-4 short labels showing the answer's skeleton (for example: "Hook: current role and scope", "Evidence: Databricks monitoring, 7 models", "Tie-back: matches their MLOps requirement"). evidenceUsed = the exact evidence bank texts the answer relies on. coverageNote = one honest sentence about how much of the must-have list this pack proves. strategy = 3-5 short bullets specific to this candidate, this role and this stage (positioning, what to emphasise, what to pre-empt). questionsToAsk = 3 sharp questions the candidate should ask this interviewer at this stage. closingLine = one sentence the candidate can end the interview on. Exactly 4 questions.`,
+FIELDS:
+- headline: one sentence on how this candidate wins this interview.
+- coveredCount / totalMustHaves / coverageNote: honest count of must-have requirements the evidence bank proves.
+- strategy: 3-5 bullets specific to this candidate, role and stage.
+- snapshot: summary = one sentence naming the role, company and interview stage. rows = 4-6 label/value facts an interviewee needs at a glance, taken from the JD (team or business unit, location and work model, pay range if stated, employment type, likely interview format for this stage). note = one sentence on what this employer's interviewers will weigh most. Never invent a fact the JD does not state; write "Not stated" instead.
+- pitch: the 60-second "tell me about yourself" answer, 120-170 words, first person, built only from the evidence bank, ending with why this role.
+- storyMap: one row per major JD requirement (6-10 rows). requirement = the JD requirement in its words; story = which experience to tell and how, in one or two sentences; proof = the single metric or artefact to land (from the evidence bank; if none, the concrete outcome in words).
+- technicalQA: 8-11 technical questions this interviewer is most likely to ask about the JD's named skills, each with a one-paragraph answer (70-130 words) that leads with the decision, then the method and specific techniques, and where it fits, one line of the candidate's own evidence. The final item is the coding or hands-on exercise list to practise if the role involves coding.
+- frameworkTopics: 6-9 frameworks, platforms or practices named or clearly implied by the JD that an interviewer will probe (for example an orchestration library, a cloud platform, an evaluation tool, a deployment stack). requirement = the JD wording it maps to. screenIdea = one sentence describing a realistic client scenario and the product screen that would show the problem (a trace view, a dashboard, a pipeline run, a training curve, an inspector, a console).
+- behavioral: 4-5 behavioural questions with STAR answers of 60-110 words from the evidence bank (failure, disagreement, explaining to non-technical people, why this company).
+- logistics: 3-5 short answer lines for practical questions (work authorization only if the resume states it, location or onsite, notice period, compensation deflection).
+- gaps: 3-6 honest gaps against the JD, each with what to say: the adjacent experience and how fast they would close it. Never claim the missing skill.
+- questionsToAsk: 3-5 sharp questions for this interviewer.
+- checklist: 5-7 day-of preparation items.
+- closingLine: one sentence to end the interview on.`,
       },
       {
         role: "user",
-        content: `ANALYSIS (JSON):\n${JSON.stringify(analysis)}\n\nJOB DESCRIPTION (for company specifics and language):\n${jdText}`,
+        content: `${evidenceBlock(analysis)}\n\nJOB DESCRIPTION:\n${jdText}`,
       },
     ],
-    response_format: zodResponseFormat(CorePackSchema, "core_pack"),
+    response_format: zodResponseFormat(ScenarioCoreSchema, "scenario_core"),
   });
-
   const parsed = completion.choices[0]?.message.parsed;
   if (!parsed) throw new Error("Pack generation failed. Please try again.");
   return {
-    core: parsed as Omit<PrepPack, "questions"> & { questions: CoreQuestion[] },
+    core: parsed as ScenarioCore,
     promptTokens: completion.usage?.prompt_tokens ?? 0,
     completionTokens: completion.usage?.completion_tokens ?? 0,
   };
 }
 
-async function generateFollowUps(
+async function generateFrameworkScenario(
   analysis: Analysis,
-  question: CoreQuestion,
-  stage: string
-): Promise<{ followUps: FollowUp[] } & Usage> {
+  topic: { name: string; requirement: string; screenIdea: string },
+  index: number
+): Promise<{ scenario: FrameworkScenario } & Usage> {
   const client = openai();
-  const stageBrief = STAGE_BRIEFS[stage] || "";
-
   const completion = await client.chat.completions.parse({
     model: MODEL,
-    temperature: 0.45,
+    temperature: 0.5,
     messages: [
       {
         role: "system",
-        content: `You are an elite interview coach predicting follow-up questions. A candidate will give the engineered answer below to a core interview question. Predict the 3 follow-ups a sharp interviewer at this stage will ask next: probes on metrics, on the candidate's personal contribution versus the team's, on trade-offs and alternatives rejected, on gaps or partial matches, and "what would you do differently". Write a tight answer for each: MUST be 45-80 words (3-4 sentences of substance, about 20-35 seconds spoken), first person, grounded ONLY in the evidence bank below, honest bridges where evidence is partial, never an invented fact.
+        content: `You write one section of an interview prep pack: a realistic client scenario for a framework or practice the job requires, the product screen an engineer would look at, how to read that screen, what to do about it, and the trade-offs against alternatives. The candidate will use this as a ready-made story when asked "how would you..." questions.
 
-Stage context: ${stageBrief.split("\n")[0]}`,
+${SCENARIO_RULES}
+
+SECTION RULES:
+- name: the framework heading, e.g. "RAG orchestration: LangChain / LlamaIndex, traced in LangSmith".
+- requirement: the JD requirement it maps to.
+- scenario: 1-2 sentences. A concrete client situation in the employer's likely domain with a visible symptom (slow answers, wrong answers, throttling, cost spike, failing pipeline, overfitting, a stalled agent).
+- screen: a believable product screen that shows the symptom with real-looking numbers. This is an illustrative mock-up drawn by the app, so make the numbers internally consistent (spans add up, a threshold is breached, a metric drops below a gate). Fill ONLY the parts that fit; set the rest to null or empty arrays. Use 'timeline' for traces and latency breakdowns (start and duration in the same unit), 'chart' for a metric over time or training curves (8-14 points per series, threshold for a quota, SLO or gate), 'graph' for agent graphs, pipelines and dependencies (4-8 nodes, mark the failing node with tone "bad" and a short note), 'table' for evaluation results, query results, comparisons or logs (3-7 rows, tone per row), 'code' for CLI or CI logs, schemas or state JSON (4-12 short lines), 'kpis' for 2-5 headline numbers, 'sidebar' for 1-3 short config groups. tool = a generic screen name (e.g. "LLM trace explorer", "Evaluation report", "CI pipeline run") and never a vendor logo or trademark claim; breadcrumb = project / view path. callout = one sentence pointing at the anomaly.
+- howToRead: 3-5 sentences that interpret the screen the way a senior engineer would: what each region shows, which number is the problem and why, and what the numbers rule out.
+- whatToDo: 2-4 sentences of concrete fixes in priority order, ending with how to verify the fix.
+- extraNote: one sentence of extra context worth saying in the interview (a metric definition, a common misconception, or a link to the candidate's own evidence). Empty string if nothing useful.
+- tradeoffs: columns = exactly 3 headers (e.g. "Option", "Strength", "Weakness" or "Choice", "Use when", "Cost"). rows = 3-5 alternatives compared honestly.`,
       },
       {
         role: "user",
-        content: `ROLE: ${analysis.roleTitle} at ${analysis.company} (${analysis.domain}, ${analysis.seniority})
-CANDIDATE: ${analysis.candidateName}, ${analysis.currentTitle}
-
-EVIDENCE BANK:
-${analysis.evidenceBank.map((e) => `- [${e.id}] ${e.text}`).join("\n")}
-
-REQUIREMENTS:
-${analysis.requirements.map((r) => `- [${r.id}] (${r.kind}, ${r.match}) ${r.text}`).join("\n")}
-
-CORE QUESTION: ${question.question}
-ENGINEERED ANSWER: ${question.answer}`,
+        content: `${evidenceBlock(analysis)}\n\nSECTION ${index + 1}\nFRAMEWORK: ${topic.name}\nJD REQUIREMENT: ${topic.requirement}\nSCENARIO IDEA: ${topic.screenIdea}`,
       },
     ],
-    response_format: zodResponseFormat(FollowUpsSchema, "follow_ups"),
+    response_format: zodResponseFormat(FrameworkScenarioSchema, "framework_scenario"),
   });
-
   const parsed = completion.choices[0]?.message.parsed;
-  if (!parsed) throw new Error("Follow-up generation failed. Please try again.");
+  if (!parsed) throw new Error("Framework scenario generation failed. Please try again.");
   return {
-    followUps: parsed.followUps as FollowUp[],
+    scenario: parsed as FrameworkScenario,
     promptTokens: completion.usage?.prompt_tokens ?? 0,
     completionTokens: completion.usage?.completion_tokens ?? 0,
   };
 }
 
-// Orchestration: analysis -> core pack -> length repair -> follow-ups in parallel.
+// Orchestration: analysis -> pack core -> one framework scenario per topic, in parallel.
 export async function generatePack(
   analysis: Analysis,
   jdText: string,
   stage: string,
   interviewType: string
 ): Promise<{ pack: PrepPack } & Usage> {
-  const core = await generateCorePack(analysis, jdText, stage, interviewType);
-
-  let repairPrompt = 0;
-  let repairCompletion = 0;
-  const repairedQuestions = await Promise.all(
-    core.core.questions.map(async (q) => {
-      if (wordCount(q.answer) >= 90) return q;
-      const r = await expandAnswer(analysis, q);
-      repairPrompt += r.promptTokens;
-      repairCompletion += r.completionTokens;
-      return wordCount(r.answer) > wordCount(q.answer) ? { ...q, answer: r.answer } : q;
-    })
+  const core = await generateScenarioCore(analysis, jdText, stage, interviewType);
+  const topics = core.core.frameworkTopics.slice(0, 9);
+  const settled = await Promise.allSettled(
+    topics.map((t, i) => generateFrameworkScenario(analysis, t, i))
   );
+  const scenarios = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+  if (topics.length && !scenarios.length) {
+    throw new Error("Framework scenarios could not be generated. Please try again.");
+  }
 
-  const followResults = await Promise.all(
-    repairedQuestions.map((q) => generateFollowUps(analysis, q, stage))
-  );
-
+  const { frameworkTopics: _topics, ...rest } = core.core;
+  void _topics;
   const pack: PrepPack = {
-    ...core.core,
-    questions: repairedQuestions.map((q, i) => ({
-      ...q,
-      followUps: followResults[i].followUps.slice(0, 3),
-    })),
+    ...rest,
+    frameworks: scenarios.map((s) => s.scenario),
   };
 
   return {
     pack,
-    promptTokens:
-      core.promptTokens + repairPrompt + followResults.reduce((s, r) => s + r.promptTokens, 0),
-    completionTokens:
-      core.completionTokens +
-      repairCompletion +
-      followResults.reduce((s, r) => s + r.completionTokens, 0),
+    promptTokens: core.promptTokens + scenarios.reduce((s, r) => s + r.promptTokens, 0),
+    completionTokens: core.completionTokens + scenarios.reduce((s, r) => s + r.completionTokens, 0),
   };
 }

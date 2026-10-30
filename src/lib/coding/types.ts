@@ -19,7 +19,20 @@ export type Lesson = {
   tests: (CodingTest | SQLTest)[];
   verifyQuery?: string | null;
   mustReject?: string[];
+  trace?: TraceFrame[];
 };
+type Cell = string | number | boolean | null;
+export type TracePanel =
+  | { type: "array"; values: Cell[]; hl: number[]; label: string; ptr?: Record<string, number>; win?: number[]; done?: number[]; labels?: string[] }
+  | { type: "grid"; cells: Cell[][]; hl: number[][]; marks: number[][]; label: string; rows?: string[]; cols?: string[] }
+  | { type: "tree"; values: (number | string | null)[]; hl: number[]; done: number[]; label: string }
+  | { type: "graph"; n: number; edges: number[][]; directed: boolean; hl: number[]; visited: number[]; label: string; hledges: number[][]; labels?: string[] }
+  | { type: "intervals"; items: number[][]; hl: number[]; label: string; result?: number[][] }
+  | { type: "list"; values: Cell[]; hl: number[]; label: string; ptr?: Record<string, number>; cycle?: number }
+  | { type: "kv"; entries: string[][]; label: string; hl: string[] }
+  | { type: "stack"; items: string[]; label: string; hl: number[] }
+  | { type: "bits"; bits: string; hl: number[]; label: string };
+export type TraceFrame = { note: string; panels: TracePanel[]; vars: Record<string, string> };
 export type RunResult = {
   passed: boolean;
   expected: unknown;

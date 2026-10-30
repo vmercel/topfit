@@ -20,9 +20,10 @@ const PROGRESS_STEPS = [
   "Decoding the job description",
   "Building your evidence bank",
   "Mapping your experience to their requirements",
-  "Selecting the 4 highest-probability questions for this stage",
-  "Engineering your answers",
-  "Predicting the follow-ups",
+  "Writing your pitch and story map",
+  "Drafting the technical questions they will ask",
+  "Building a scenario and screen for every framework in the JD",
+  "Weighing the trade-offs and your gaps",
 ];
 
 function StepHead({ n, title }: { n: number; title: string }) {
@@ -135,9 +136,10 @@ export default function Home() {
           Build your prep pack
         </h1>
         <p className="mt-2.5 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
-          Add your resume and the job description. TopFit builds the 4 questions this interview
-          stage is most likely to ask, engineers brief answers from your own experience, and
-          prepares you for the follow-ups.
+          Add your resume and the job description. TopFit builds a full briefing for this
+          interview: your pitch, stories mapped to the JD, technical questions with brief answers,
+          and a client scenario with an illustrative screen and trade-offs for every framework the
+          job names.
         </p>
       </div>
 

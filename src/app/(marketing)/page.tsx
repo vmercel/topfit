@@ -17,8 +17,8 @@ import { STAGES } from "@/lib/types";
 import SamplePreview from "@/components/SamplePreview";
 
 const STATS = [
-  { icon: ListChecks, value: "4", label: "engineered answers per pack" },
-  { icon: MessagesSquare, value: "12", label: "predicted follow-up questions" },
+  { icon: ListChecks, value: "6-9", label: "framework scenarios per pack" },
+  { icon: MessagesSquare, value: "10+", label: "technical questions answered" },
   { icon: Layers, value: "6", label: "interview stages covered" },
   { icon: Timer, value: "~30s", label: "from paste to ready pack" },
 ];
@@ -37,7 +37,7 @@ const STEPS = [
   {
     icon: Sparkles,
     title: "Walk in ready",
-    body: "You get the 4 questions that stage is most likely to ask, brief engineered answers drawn from your own experience, and the follow-ups they lead to.",
+    body: "You get your pitch, stories mapped to the job, brief technical answers, and a client scenario with an illustrative screen, how to read it and the trade-offs for every framework the job names.",
   },
 ];
 
@@ -59,8 +59,8 @@ const FEATURES = [
   },
   {
     icon: MessagesSquare,
-    title: "Follow-up prediction",
-    body: "Every answer comes with the 3 follow-ups it is most likely to trigger, each with its own prepared answer.",
+    title: "Framework scenarios",
+    body: "Every framework in the job description gets a realistic client scenario, an illustrative product screen, how to read it, what you would do, and the trade-offs against alternatives.",
   },
   {
     icon: Timer,
@@ -131,9 +131,9 @@ export default function LandingPage() {
               <span className="text-forest-700">already knowing the questions.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-soft">
-              Drop in your resume and the job description. TopFit builds the 4 questions your next
-              interview stage is most likely to ask, writes brief answers from your real
-              experience, and prepares you for every follow-up.
+              Drop in your resume and the job description. TopFit builds the briefing a senior engineer
+              would write for you: your pitch, the technical questions with brief answers, and a
+              scenario, screen and trade-off table for every framework the job names.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
@@ -152,8 +152,8 @@ export default function LandingPage() {
             </div>
             <div className="mt-10 grid max-w-lg grid-cols-3 gap-4 border-t border-line pt-6">
               {[
-                { value: "4", label: "engineered answers" },
-                { value: "12", label: "predicted follow-ups" },
+                { value: "6-9", label: "framework scenarios" },
+                { value: "10+", label: "technical answers" },
                 { value: "~30s", label: "to a ready pack" },
               ].map((s) => (
                 <div key={s.label}>
@@ -257,9 +257,10 @@ export default function LandingPage() {
               {[
                 "A coverage score with the full requirement map behind it",
                 "A positioning strategy for this specific role and panel",
-                "4 questions with answers written to be spoken in about a minute",
-                "The trap inside each question, named before you fall into it",
-                "3 predicted follow-ups per question, each with its own answer",
+                "A 60-second pitch and your stories mapped to each requirement",
+                "Technical questions with brief, decision-first answers",
+                "A client scenario, illustrative screen and trade-off table per framework",
+                "Honest gaps with exactly what to say about each one",
                 "Practice mode with timers, and copy as Markdown for your notes",
               ].map((item) => (
                 <li key={item} className="flex gap-3 text-[15px] leading-relaxed text-ink-soft">

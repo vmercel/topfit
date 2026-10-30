@@ -32,12 +32,12 @@ const FEATURES = [
   {
     icon: Sparkles,
     title: "Stage-aware question engine",
-    body: "A recruiter screen checks motivation and range. A hiring manager checks ownership. A technical round checks depth, and a final round checks judgment. The engine selects the 4 highest probability questions for the stage and format you selected, weighted toward what the job description emphasizes.",
+    body: "A recruiter screen checks motivation and range. A hiring manager checks ownership. A technical round checks depth, and a final round checks judgment. The engine selects the technical and behavioural questions that stage is most likely to ask, weighted toward what the job description emphasizes.",
   },
   {
     icon: MessagesSquare,
-    title: "Follow-up prediction",
-    body: "Interviews are conversations, not quizzes. Each core answer ships with the 3 follow-ups it is most likely to trigger, and a prepared answer for each one. The second and third level questions are where offers are won, and you will have rehearsed them.",
+    title: "Framework scenarios",
+    body: "Interviewers ask how you would handle real problems with the tools they use. Every framework in the job description gets a client scenario, an illustrative screen with realistic numbers, how to read it, what you would do, and a trade-off table against the alternatives.",
   },
   {
     icon: Timer,
