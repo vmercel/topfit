@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
+  BookOpen,
   Check,
+  Loader2,
+  Sparkles,
   ChevronDown,
   Clock,
   Copy,
@@ -29,7 +32,9 @@ function toMarkdown(result: PrepResult): string {
   const lines: string[] = [];
   lines.push(`# Interview prep: ${analysis.roleTitle} at ${analysis.company}`);
   lines.push(`Candidate: ${analysis.candidateName}. ${analysis.pitchLine}`);
-  lines.push(`\nCoverage: ${pack.coveredCount} of ${pack.totalMustHaves} must-haves evidenced. ${pack.coverageNote}`);
+  lines.push(
+    `\nCoverage: ${pack.coveredCount} of ${pack.totalMustHaves} must-haves evidenced. ${pack.coverageNote}`,
+  );
   lines.push(`\n## Strategy`);
   pack.strategy.forEach((s) => lines.push(`- ${s}`));
   if (pack.snapshot) {
@@ -40,11 +45,15 @@ function toMarkdown(result: PrepResult): string {
   if (pack.pitch) lines.push(`\n## Your 60-second pitch\n${pack.pitch}`);
   if (pack.storyMap?.length) {
     lines.push(`\n## Your stories mapped to the JD`);
-    pack.storyMap.forEach((s) => lines.push(`- ${s.requirement}: ${s.story} (${s.proof})`));
+    pack.storyMap.forEach((s) =>
+      lines.push(`- ${s.requirement}: ${s.story} (${s.proof})`),
+    );
   }
   if (pack.technicalQA?.length) {
     lines.push(`\n## Technical questions with brief answers`);
-    pack.technicalQA.forEach((q, i) => lines.push(`\n**${i + 1}. ${q.question}**\n${q.answer}`));
+    pack.technicalQA.forEach((q, i) =>
+      lines.push(`\n**${i + 1}. ${q.question}**\n${q.answer}`),
+    );
   }
   (pack.frameworks ?? []).forEach((f, i) => {
     lines.push(`\n## ${i + 1}. ${f.name}`);
@@ -53,12 +62,16 @@ function toMarkdown(result: PrepResult): string {
     lines.push(`\n**How to read the screen.** ${f.howToRead}`);
     lines.push(`\n**What you do.** ${f.whatToDo}`);
     if (f.extraNote) lines.push(`\n${f.extraNote}`);
-    lines.push(`\n| ${f.tradeoffs.columns.join(" | ")} |\n| ${f.tradeoffs.columns.map(() => "---").join(" | ")} |`);
+    lines.push(
+      `\n| ${f.tradeoffs.columns.join(" | ")} |\n| ${f.tradeoffs.columns.map(() => "---").join(" | ")} |`,
+    );
     f.tradeoffs.rows.forEach((r) => lines.push(`| ${r.join(" | ")} |`));
   });
   if (pack.behavioral?.length) {
     lines.push(`\n## Behavioural questions`);
-    pack.behavioral.forEach((q) => lines.push(`\n**${q.question}**\n${q.answer}`));
+    pack.behavioral.forEach((q) =>
+      lines.push(`\n**${q.question}**\n${q.answer}`),
+    );
   }
   if (pack.logistics?.length) {
     lines.push(`\n## Logistics`);
@@ -132,7 +145,15 @@ function Timer() {
   );
 }
 
-function CoverageRing({ pct, covered, total }: { pct: number; covered: number; total: number }) {
+function CoverageRing({
+  pct,
+  covered,
+  total,
+}: {
+  pct: number;
+  covered: number;
+  total: number;
+}) {
   const size = 128;
   const stroke = 10;
   const r = (size - stroke) / 2;
@@ -140,7 +161,14 @@ function CoverageRing({ pct, covered, total }: { pct: number; covered: number; t
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-forest-100" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          strokeWidth={stroke}
+          className="stroke-forest-100"
+        />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -165,7 +193,13 @@ function CoverageRing({ pct, covered, total }: { pct: number; covered: number; t
   );
 }
 
-function SectionLabel({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+function SectionLabel({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
       <span className="text-forest-600">{icon}</span>
@@ -174,11 +208,38 @@ function SectionLabel({ icon, children }: { icon: React.ReactNode; children: Rea
   );
 }
 
-export default function PackView({ result }: { result: PrepResult }) {
-  const { analysis, pack } = result;
+export default function PackView({ result: initial }: { result: PrepResult }) {
+  const [pack, setPack] = useState(initial.pack);
+  const result = { ...initial, pack };
+  const { analysis } = result;
+  const hasMaterial = !!pack.frameworks?.length;
+  const hasLegacy = !!pack.questions?.length;
+  const [tab, setTab] = useState<"material" | "map" | "qa">("material");
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState("");
+
+  async function generateMaterial() {
+    if (!result.id) return;
+    setGenerating(true);
+    setGenError("");
+    try {
+      const res = await fetch(`/api/prep/${result.id}/material`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Generation failed.");
+      setPack(data.pack);
+    } catch (e) {
+      setGenError(e instanceof Error ? e.message : "Generation failed.");
+    } finally {
+      setGenerating(false);
+    }
+  }
   const [practice, setPractice] = useState(false);
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
-  const [openFollowUps, setOpenFollowUps] = useState<Record<string, boolean>>({});
+  const [openFollowUps, setOpenFollowUps] = useState<Record<string, boolean>>(
+    {},
+  );
   const [copied, setCopied] = useState(false);
 
   const coveragePct = useMemo(() => {
@@ -192,9 +253,11 @@ export default function PackView({ result }: { result: PrepResult }) {
     return m;
   }, [analysis]);
 
-  const stageLabel = STAGES.find((s) => s.id === result.stage)?.label || result.stage;
+  const stageLabel =
+    STAGES.find((s) => s.id === result.stage)?.label || result.stage;
   const typeLabel =
-    INTERVIEW_TYPES.find((t) => t.id === result.interviewType)?.label || result.interviewType;
+    INTERVIEW_TYPES.find((t) => t.id === result.interviewType)?.label ||
+    result.interviewType;
 
   async function copyPack() {
     try {
@@ -221,28 +284,37 @@ export default function PackView({ result }: { result: PrepResult }) {
                 {analysis.domain} · {analysis.seniority}
               </p>
               <h2 className="mt-3.5 text-3xl font-bold leading-tight tracking-tight text-ink">
-                {analysis.roleTitle} <span className="text-slate-400">at</span> {analysis.company}
+                {analysis.roleTitle} <span className="text-slate-400">at</span>{" "}
+                {analysis.company}
               </h2>
-              <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">{pack.headline}</p>
+              <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
+                {pack.headline}
+              </p>
 
               <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-line pt-5 sm:grid-cols-4">
                 <div>
                   <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                     Candidate
                   </dt>
-                  <dd className="mt-1 text-sm font-semibold text-ink">{analysis.candidateName}</dd>
+                  <dd className="mt-1 text-sm font-semibold text-ink">
+                    {analysis.candidateName}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                     Current role
                   </dt>
-                  <dd className="mt-1 text-sm font-semibold text-ink">{analysis.currentTitle}</dd>
+                  <dd className="mt-1 text-sm font-semibold text-ink">
+                    {analysis.currentTitle}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                     Experience
                   </dt>
-                  <dd className="mt-1 text-sm font-semibold text-ink">{analysis.yearsExperience}</dd>
+                  <dd className="mt-1 text-sm font-semibold text-ink">
+                    {analysis.yearsExperience}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
@@ -253,11 +325,17 @@ export default function PackView({ result }: { result: PrepResult }) {
                   </dd>
                 </div>
               </dl>
-              <p className="mt-4 text-sm leading-relaxed text-slate-500">{analysis.pitchLine}</p>
+              <p className="mt-4 text-sm leading-relaxed text-slate-500">
+                {analysis.pitchLine}
+              </p>
             </div>
 
             <div className="flex flex-col items-center gap-3 rounded-3xl bg-forest-50/80 px-6 py-5 ring-1 ring-forest-100">
-              <CoverageRing pct={coveragePct} covered={pack.coveredCount} total={pack.totalMustHaves} />
+              <CoverageRing
+                pct={coveragePct}
+                covered={pack.coveredCount}
+                total={pack.totalMustHaves}
+              />
               <p className="text-xs font-semibold uppercase tracking-wider text-forest-800">
                 Requirement coverage
               </p>
@@ -276,11 +354,21 @@ export default function PackView({ result }: { result: PrepResult }) {
                   : `${btnBase} bg-forest-700 text-white shadow-pop hover:bg-forest-800`
               }
             >
-              {practice ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-              {practice ? "Exit practice mode" : "Practice mode: hide the answers"}
+              {practice ? (
+                <Eye className="h-4 w-4" />
+              ) : (
+                <EyeOff className="h-4 w-4" />
+              )}
+              {practice
+                ? "Exit practice mode"
+                : "Practice mode: hide the answers"}
             </button>
             <button onClick={copyPack} className={btnGhost}>
-              {copied ? <Check className="h-4 w-4 text-forest-600" /> : <Copy className="h-4 w-4" />}
+              {copied ? (
+                <Check className="h-4 w-4 text-forest-600" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
               {copied ? "Copied" : "Copy the whole pack"}
             </button>
             {result.id && (
@@ -292,7 +380,9 @@ export default function PackView({ result }: { result: PrepResult }) {
           </div>
 
           <div className="mt-6">
-            <SectionLabel icon={<Target className="h-4 w-4" />}>Your strategy</SectionLabel>
+            <SectionLabel icon={<Target className="h-4 w-4" />}>
+              Your strategy
+            </SectionLabel>
             <div className="mt-3.5 grid gap-2.5 md:grid-cols-2">
               {pack.strategy.map((s, i) => (
                 <div
@@ -310,7 +400,87 @@ export default function PackView({ result }: { result: PrepResult }) {
         </div>
       </section>
 
-      {analysis.requirements.length > 0 && (
+      <div
+        role="tablist"
+        aria-label="Pack views"
+        className="flex flex-wrap gap-2 rounded-full border border-line bg-white p-1.5 shadow-card"
+      >
+        {(
+          [
+            [
+              "material",
+              "Prep material",
+              <BookOpen key="i" className="h-4 w-4" />,
+            ],
+            [
+              "map",
+              "Requirement map",
+              <ListChecks key="i" className="h-4 w-4" />,
+            ],
+            ...(hasLegacy
+              ? [
+                  [
+                    "qa",
+                    "Practice Q&A",
+                    <MessagesSquare key="i" className="h-4 w-4" />,
+                  ],
+                ]
+              : []),
+          ] as [typeof tab, string, React.ReactNode][]
+        ).map(([id, label, icon]) => (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={tab === id}
+            onClick={() => setTab(id)}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+              tab === id
+                ? "bg-forest-900 text-white shadow-pop"
+                : "text-ink-soft hover:bg-forest-50 hover:text-forest-800"
+            }`}
+          >
+            {icon}
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "material" &&
+        (hasMaterial ? (
+          <ScenarioPack pack={pack} practice={practice} />
+        ) : (
+          <section className="rounded-[28px] border border-line bg-white p-8 text-center shadow-card">
+            <Sparkles className="mx-auto h-8 w-8 text-forest-600" />
+            <h3 className="mt-3 text-xl font-bold text-ink">
+              Generate the prep material for this pack
+            </h3>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-500">
+              Snapshot, 60-second pitch, stories mapped to the JD, technical
+              answers, and a client scenario with an illustrative screen, how to
+              read it and trade-offs for every framework this job names. Takes
+              about two minutes.
+            </p>
+            <button
+              onClick={generateMaterial}
+              disabled={generating || !result.id}
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-forest-800 px-6 py-3 text-sm font-semibold text-white shadow-pop transition hover:bg-forest-900 disabled:opacity-60"
+            >
+              {generating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {generating
+                ? "Building your prep material..."
+                : "Generate prep material"}
+            </button>
+            {genError && (
+              <p className="mt-3 text-sm text-rose-700">{genError}</p>
+            )}
+          </section>
+        ))}
+
+      {tab === "map" && analysis.requirements.length > 0 && (
         <section className="rounded-[28px] border border-line bg-white p-6 shadow-card sm:p-8">
           <SectionLabel icon={<ListChecks className="h-4 w-4" />}>
             How your resume maps to this job
@@ -334,11 +504,17 @@ export default function PackView({ result }: { result: PrepResult }) {
                   ) : (
                     <EyeOff className="h-3 w-3" />
                   )}
-                  {r.match === "strong" ? "Strong" : r.match === "partial" ? "Partial" : "Gap"}
+                  {r.match === "strong"
+                    ? "Strong"
+                    : r.match === "partial"
+                      ? "Partial"
+                      : "Gap"}
                 </span>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-ink">{r.text}</p>
-                  <p className="mt-0.5 text-[13px] leading-relaxed text-slate-500">{r.note}</p>
+                  <p className="mt-0.5 text-[13px] leading-relaxed text-slate-500">
+                    {r.note}
+                  </p>
                 </div>
                 <span className="ml-auto shrink-0 rounded-full bg-paper px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 ring-1 ring-line">
                   {r.kind === "must" ? "Must have" : "Nice to have"}
@@ -354,8 +530,12 @@ export default function PackView({ result }: { result: PrepResult }) {
               </p>
               <ul className="mt-2.5 space-y-2">
                 {analysis.risks.map((r, i) => (
-                  <li key={i} className="text-sm leading-relaxed text-amber-900">
-                    <span className="font-semibold">{r.text}.</span> {r.mitigation}
+                  <li
+                    key={i}
+                    className="text-sm leading-relaxed text-amber-900"
+                  >
+                    <span className="font-semibold">{r.text}.</span>{" "}
+                    {r.mitigation}
                   </li>
                 ))}
               </ul>
@@ -364,16 +544,20 @@ export default function PackView({ result }: { result: PrepResult }) {
         </section>
       )}
 
-      {pack.frameworks && <ScenarioPack pack={pack} practice={practice} />}
-
-      {(pack.frameworks ? [] : (pack.questions ?? [])).map((q, qi) => {
+      {(tab === "qa" ? (pack.questions ?? []) : []).map((q, qi) => {
         const key = `q${qi}`;
         const answerShown = !practice || revealed[key];
         const fuOpen = openFollowUps[key] || practice;
         return (
-          <section key={key} className="rounded-[28px] border border-line bg-white p-6 shadow-card sm:p-8">
+          <section
+            key={key}
+            className="rounded-[28px] border border-line bg-white p-6 shadow-card sm:p-8"
+          >
             <div className="flex gap-5">
-              <div className="hidden flex-col items-center sm:flex" aria-hidden="true">
+              <div
+                className="hidden flex-col items-center sm:flex"
+                aria-hidden="true"
+              >
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-forest-900 text-[15px] font-bold text-white shadow-pop">
                   {String(qi + 1).padStart(2, "0")}
                 </span>
@@ -401,7 +585,10 @@ export default function PackView({ result }: { result: PrepResult }) {
                   {q.question}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                  <span className="font-semibold text-ink-soft">Why they ask:</span> {q.intent}
+                  <span className="font-semibold text-ink-soft">
+                    Why they ask:
+                  </span>{" "}
+                  {q.intent}
                 </p>
 
                 {q.provesRequirements.length > 0 && (
@@ -427,7 +614,10 @@ export default function PackView({ result }: { result: PrepResult }) {
                     </div>
                     <div className="mt-3.5 flex flex-wrap gap-1.5">
                       {q.structure.map((s, i) => (
-                        <span key={i} className="rounded-lg bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500 ring-1 ring-line">
+                        <span
+                          key={i}
+                          className="rounded-lg bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500 ring-1 ring-line"
+                        >
                           {s}
                         </span>
                       ))}
@@ -436,7 +626,9 @@ export default function PackView({ result }: { result: PrepResult }) {
                       <p className="mt-3.5 flex items-start gap-1.5 text-xs leading-relaxed text-slate-500">
                         <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-forest-600" />
                         <span>
-                          <span className="font-semibold text-ink-soft">Built from your resume:</span>{" "}
+                          <span className="font-semibold text-ink-soft">
+                            Built from your resume:
+                          </span>{" "}
                           {q.evidenceUsed.join(" · ")}
                         </span>
                       </p>
@@ -454,18 +646,22 @@ export default function PackView({ result }: { result: PrepResult }) {
                     className="mt-5 flex w-full flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-line-strong py-9 text-sm font-medium text-slate-500 transition hover:border-forest-400 hover:bg-forest-50/50 hover:text-forest-800"
                   >
                     <EyeOff className="h-5 w-5" />
-                    Say your answer out loud, timed. Then tap to compare with the engineered answer.
+                    Say your answer out loud, timed. Then tap to compare with
+                    the engineered answer.
                   </button>
                 )}
 
                 <div className="mt-6 border-t border-line pt-5">
                   <button
-                    onClick={() => setOpenFollowUps((o) => ({ ...o, [key]: !fuOpen }))}
+                    onClick={() =>
+                      setOpenFollowUps((o) => ({ ...o, [key]: !fuOpen }))
+                    }
                     aria-expanded={fuOpen}
                     className="flex w-full items-center gap-2 text-left text-sm font-bold text-forest-800 transition hover:text-forest-950"
                   >
                     <MessagesSquare className="h-4.5 w-4.5 text-forest-600" />
-                    {fuOpen ? "Hide" : "Show"} the 3 follow-ups they will ask next
+                    {fuOpen ? "Hide" : "Show"} the 3 follow-ups they will ask
+                    next
                     <ChevronDown
                       className={`ml-auto h-4.5 w-4.5 transition-transform duration-200 ${fuOpen ? "rotate-180" : ""}`}
                     />
@@ -473,7 +669,10 @@ export default function PackView({ result }: { result: PrepResult }) {
                   {fuOpen && (
                     <div className="relative ml-2 mt-4 space-y-3 border-l-2 border-forest-100 pl-5">
                       {q.followUps.map((f, fi) => (
-                        <div key={fi} className="relative rounded-2xl border border-line bg-cream p-4.5 sm:p-5">
+                        <div
+                          key={fi}
+                          className="relative rounded-2xl border border-line bg-cream p-4.5 sm:p-5"
+                        >
                           <span
                             className="absolute -left-[27px] top-6 h-2.5 w-2.5 rounded-full bg-forest-400 ring-4 ring-white"
                             aria-hidden="true"
@@ -483,7 +682,9 @@ export default function PackView({ result }: { result: PrepResult }) {
                               {fi + 1}
                             </span>
                             <div className="min-w-0">
-                              <p className="text-[15px] font-semibold leading-snug text-ink">{f.question}</p>
+                              <p className="text-[15px] font-semibold leading-snug text-ink">
+                                {f.question}
+                              </p>
                               <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
                                 <span>Likely because: {f.whyLikely}</span>
                                 <span aria-hidden="true">·</span>
@@ -508,30 +709,33 @@ export default function PackView({ result }: { result: PrepResult }) {
         );
       })}
 
-      <section className="rounded-[28px] border border-line bg-white p-6 shadow-card sm:p-8">
-        <SectionLabel icon={<MessagesSquare className="h-4 w-4" />}>
-          Questions you ask them
-        </SectionLabel>
-        <ul className="mt-4 space-y-2.5">
-          {pack.questionsToAsk.map((q, i) => (
-            <li
-              key={i}
-              className="flex items-start gap-3 rounded-2xl bg-paper px-4 py-3 text-sm leading-relaxed text-ink-soft ring-1 ring-line/70"
-            >
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-white text-[11px] font-bold text-forest-800 ring-1 ring-line">
-                {i + 1}
-              </span>
-              <span className="pt-0.5">{q}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-5 flex items-start gap-3.5 rounded-2xl border border-forest-100 bg-forest-50 px-5 py-4">
-          <Quote className="mt-0.5 h-5 w-5 shrink-0 text-forest-600" />
-          <p className="text-[15px] leading-relaxed text-ink">
-            <span className="font-bold text-forest-900">Closing line:</span> {pack.closingLine}
-          </p>
-        </div>
-      </section>
+      {tab !== "map" && (
+        <section className="rounded-[28px] border border-line bg-white p-6 shadow-card sm:p-8">
+          <SectionLabel icon={<MessagesSquare className="h-4 w-4" />}>
+            Questions you ask them
+          </SectionLabel>
+          <ul className="mt-4 space-y-2.5">
+            {pack.questionsToAsk.map((q, i) => (
+              <li
+                key={i}
+                className="flex items-start gap-3 rounded-2xl bg-paper px-4 py-3 text-sm leading-relaxed text-ink-soft ring-1 ring-line/70"
+              >
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-white text-[11px] font-bold text-forest-800 ring-1 ring-line">
+                  {i + 1}
+                </span>
+                <span className="pt-0.5">{q}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-5 flex items-start gap-3.5 rounded-2xl border border-forest-100 bg-forest-50 px-5 py-4">
+            <Quote className="mt-0.5 h-5 w-5 shrink-0 text-forest-600" />
+            <p className="text-[15px] leading-relaxed text-ink">
+              <span className="font-bold text-forest-900">Closing line:</span>{" "}
+              {pack.closingLine}
+            </p>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

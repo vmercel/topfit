@@ -5,6 +5,20 @@ import { SCENARIO_RULES, STAGE_BRIEFS, TYPE_BRIEFS } from "./knowledge";
 import type { Analysis, FrameworkScenario, PrepPack } from "./types";
 
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o";
+// Prep material is long-form reasoning; use the stronger model when available.
+const PREP_MODEL = process.env.PREP_MODEL || "gpt-4.1";
+
+type ParseArgs = Parameters<OpenAI["chat"]["completions"]["parse"]>[0];
+async function parseWithFallback(args: ParseArgs) {
+  const client = openai();
+  try {
+    return await client.chat.completions.parse({ ...args, model: PREP_MODEL });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (PREP_MODEL === MODEL || !/model|not found|does not exist|access/i.test(msg)) throw err;
+    return await client.chat.completions.parse({ ...args, model: MODEL });
+  }
+}
 
 function openai() {
   const key = process.env.OPENAI_API_KEY;
@@ -71,9 +85,8 @@ async function generateScenarioCore(
   stage: string,
   interviewType: string
 ): Promise<{ core: ScenarioCore } & Usage> {
-  const client = openai();
-  const completion = await client.chat.completions.parse({
-    model: MODEL,
+  const completion = await parseWithFallback({
+    model: PREP_MODEL,
     temperature: 0.4,
     messages: [
       {
@@ -91,9 +104,9 @@ FIELDS:
 - strategy: 3-5 bullets specific to this candidate, role and stage.
 - snapshot: summary = one sentence naming the role, company and interview stage. rows = 4-6 label/value facts an interviewee needs at a glance, taken from the JD (team or business unit, location and work model, pay range if stated, employment type, likely interview format for this stage). note = one sentence on what this employer's interviewers will weigh most. Never invent a fact the JD does not state; write "Not stated" instead.
 - pitch: the 60-second "tell me about yourself" answer, 120-170 words, first person, built only from the evidence bank, ending with why this role.
-- storyMap: one row per major JD requirement (6-10 rows). requirement = the JD requirement in its words; story = which experience to tell and how, in one or two sentences; proof = the single metric or artefact to land (from the evidence bank; if none, the concrete outcome in words).
-- technicalQA: 8-11 technical questions this interviewer is most likely to ask about the JD's named skills, each with a one-paragraph answer (70-130 words) that leads with the decision, then the method and specific techniques, and where it fits, one line of the candidate's own evidence. The final item is the coding or hands-on exercise list to practise if the role involves coding.
-- frameworkTopics: 6-9 frameworks, platforms or practices named or clearly implied by the JD that an interviewer will probe (for example an orchestration library, a cloud platform, an evaluation tool, a deployment stack). requirement = the JD wording it maps to. screenIdea = one sentence describing a realistic client scenario and the product screen that would show the problem (a trace view, a dashboard, a pipeline run, a training curve, an inspector, a console).
+- storyMap: one row per major JD requirement (7-10 rows). requirement = the JD requirement in its words; story = which specific project or system from the evidence bank to tell, and what the candidate built, in one or two sentences; proof = the single number or named artefact to land, copied exactly from the evidence bank (for example "30% relevance gain over keyword search", "release cycle cut from 2 weeks to 2 days"). Never write vague outcomes such as "improved productivity" or "enhanced performance"; if the bank has no number for that story, name the concrete artefact instead.
+- technicalQA: 9-11 technical questions this interviewer is most likely to ask about the JD's named skills (design a production RAG system; debug hallucinations; design an agent and when not to; single vs multi-agent; the protocols, platforms and fine-tuning methods the JD names; evaluation; guardrails; cost and latency; serving in production), each with a one-paragraph answer (80-140 words) that leads with the decision, then names concrete techniques, parameters and metrics (for example chunk sizes, top-k, rerankers, recall@k, faithfulness, LoRA rank, p95 latency, canary rollouts) and, where it fits, one line of the candidate's own evidence. The final item lists the hands-on coding exercises to practise.
+- frameworkTopics: 7-9 DISTINCT framework families named or clearly implied by the JD, one entry per family, never two entries on the same tool or practice. Cover, where the JD names them: orchestration (e.g. LangChain / LlamaIndex), agent frameworks (e.g. LangGraph), vector databases, LLM platforms (e.g. Azure OpenAI, Bedrock), evaluation (e.g. RAGAS, DeepEval), observability and cost governance, delivery (FastAPI, Docker, Kubernetes, CI/CD), fine-tuning (LoRA, QLoRA), protocols (e.g. MCP), data and ML platforms. name = the family with its JD tools, e.g. "Agentic workflows: LangGraph (tool calling, memory, multi-agent, human in the loop)". requirement = the JD wording it maps to. screenIdea = one sentence describing a realistic client scenario with a visible symptom and the product screen that shows it (a trace view, an agent graph with state, a vector query with scores, a deployment quota chart, an evaluation report comparing two configurations, an LLMOps cost dashboard, a CI run blocked by an eval gate, a training loss curve, a protocol inspector). Use a different screen type for each topic.
 - behavioral: 4-5 behavioural questions with STAR answers of 60-110 words from the evidence bank (failure, disagreement, explaining to non-technical people, why this company).
 - logistics: 3-5 short answer lines for practical questions (work authorization only if the resume states it, location or onsite, notice period, compensation deflection).
 - gaps: 3-6 honest gaps against the JD, each with what to say: the adjacent experience and how fast they would close it. Never claim the missing skill.
@@ -122,9 +135,8 @@ async function generateFrameworkScenario(
   topic: { name: string; requirement: string; screenIdea: string },
   index: number
 ): Promise<{ scenario: FrameworkScenario } & Usage> {
-  const client = openai();
-  const completion = await client.chat.completions.parse({
-    model: MODEL,
+  const completion = await parseWithFallback({
+    model: PREP_MODEL,
     temperature: 0.5,
     messages: [
       {
@@ -157,6 +169,16 @@ SECTION RULES:
     promptTokens: completion.usage?.prompt_tokens ?? 0,
     completionTokens: completion.usage?.completion_tokens ?? 0,
   };
+}
+
+// Prep material for an existing pack (e.g. one built before framework scenarios existed).
+export async function generatePrepMaterial(
+  analysis: Analysis,
+  jdText: string,
+  stage: string,
+  interviewType: string
+) {
+  return generatePack(analysis, jdText, stage, interviewType);
 }
 
 // Orchestration: analysis -> pack core -> one framework scenario per topic, in parallel.
